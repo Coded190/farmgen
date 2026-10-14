@@ -1,0 +1,148 @@
+{
+  "id": "farm_000",
+  "seed": 0,
+  "brief": "a small dairy farm with a barn, silo, fence, and pasture.",
+  "ground": {
+    "size_m": [
+      40.0,
+      40.0
+    ],
+    "material": "tilled_soil",
+    "terrain_m": [
+      120.0,
+      120.0
+    ],
+    "relief_m": 0.4,
+    "surround_relief_m": 4.0
+  },
+  "assets": [
+    {
+      "id": "barn_01",
+      "prompt": "a red wooden barn",
+      "size_m": [
+        12.0,
+        8.0,
+        7.0
+      ],
+      "count": 1,
+      "layout": "unique",
+      "image_path": null,
+      "mesh_path": null,
+      "cache_key": null,
+      "orient": "y_up",
+      "instances": []
+    },
+    {
+      "id": "silo_01",
+      "prompt": "an exterior corrugated metal farm silo tower with a conical metal roof, no glass and no visible grain",
+      "size_m": [
+        5.0,
+        5.0,
+        12.0
+      ],
+      "count": 1,
+      "layout": "unique",
+      "image_path": null,
+      "mesh_path": null,
+      "cache_key": null,
+      "orient": "y_up",
+      "instances": []
+    },
+    {
+      "id": "tractor_01",
+      "prompt": "a green farm tractor",
+      "size_m": [
+        4.5,
+        2.2,
+        2.8
+      ],
+      "count": 1,
+      "layout": "unique",
+      "image_path": null,
+      "mesh_path": null,
+      "cache_key": null,
+      "orient": "y_up",
+      "instances": []
+    },
+    {
+      "id": "trough_01",
+      "prompt": "a metal livestock water trough",
+      "size_m": [
+        2.0,
+        0.6,
+        0.6
+      ],
+      "count": 1,
+      "layout": "unique",
+      "image_path": null,
+      "mesh_path": null,
+      "cache_key": null,
+      "orient": "y_up",
+      "instances": []
+    },
+    {
+      "id": "crate_01",
+      "prompt": "a wooden farm crate",
+      "size_m": [
+        0.8,
+        0.6,
+        0.5
+      ],
+      "count": 1,
+      "layout": "unique",
+      "image_path": null,
+      "mesh_path": null,
+      "cache_key": null,
+      "orient": "y_up",
+      "instances": []
+    },
+    {
+      "id": "fence_01",
+      "prompt": "one wooden farm fence segment with two horizontal rails between two square posts, no vertical pickets",
+      "size_m": [
+        2.4,
+        0.2,
+        1.2
+      ],
+      "count": 10,
+      "layout": "line",
+      "image_path": null,
+      "mesh_path": null,
+      "cache_key": null,
+      "orient": "y_up",
+      "instances": []
+    },
+    {
+      "id": "hay_01",
+      "prompt": "a solid rectangular packed hay bale with flat faces and no loose straw strands",
+      "size_m": [
+        1.2,
+        0.6,
+        0.5
+      ],
+      "count": 6,
+      "layout": "grid",
+      "image_path": null,
+      "mesh_path": null,
+      "cache_key": null,
+      "orient": "y_up",
+      "instances": []
+    },
+    {
+      "id": "crop_01",
+      "prompt": "a single corn stalk plant with long green leaves growing upright from roots, not a harvested cob",
+      "size_m": [
+        0.6,
+        0.6,
+        1.8
+      ],
+      "count": 16,
+      "layout": "rows",
+      "image_path": null,
+      "mesh_path": null,
+      "cache_key": null,
+      "orient": "y_up",
+      "instances": []
+    }
+  ]
+}

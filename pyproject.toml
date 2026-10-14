@@ -1,0 +1,30 @@
+[project]
+name = "farmgen"
+version = "0.1.0"
+description = "FarmGen: flat Infinigen ground plus scaled TRELLIS.2 props"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "trimesh",
+    "pydantic>=2",
+    "pillow",
+    "requests",
+    "usd-core",
+]
+
+[project.scripts]
+farmgen = "farmgen.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["farmgen*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

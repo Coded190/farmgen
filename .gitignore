@@ -1,0 +1,9 @@
+.venv/
+third_party/**/.venv/
+toolchains/
+outputs/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+.python-version

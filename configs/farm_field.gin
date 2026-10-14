@@ -1,0 +1,26 @@
+# Farm field. Load after a scene type and no_assets.gin.
+# Names match infinigen/terrain/scene.py and terrain/elements/ground.py.
+# no_assets.gin already sets trees, grass, creatures, and rocks to chance 0.
+
+scene.caves_chance = 0
+scene.landtiles_chance = 0
+scene.ground_chance = 1
+scene.warped_rocks_chance = 0
+scene.voronoi_rocks_chance = 0
+scene.voronoi_grains_chance = 0
+scene.upsidedown_mountains_chance = 0
+scene.waterbody_chance = 0
+scene.volcanos_chance = 0
+scene.ground_ice_chance = 0
+
+Ground.scale = 20
+Ground.height = 4
+Ground.with_sand_dunes = 0
+Ground.octaves = 4
+Ground.freq = 0.01
+
+# populated_bounds is (xmin, xmax, ymin, ymax, zmin, zmax) in meters.
+# The placement plot is the inner 40 m. The mesh is the 120 m surround.
+# no_assets stays on, so grass is the baked shader and not a plant mesh.
+Terrain.populated_bounds = (0, 120, 0, 120, -2, 8)
+Terrain.bounds = (0, 120, 0, 120, -4, 8)

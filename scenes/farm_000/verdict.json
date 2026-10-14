@@ -1,0 +1,50 @@
+{
+  "entries": [
+    {
+      "id": "ground",
+      "label": "ok",
+      "action": null
+    },
+    {
+      "id": "barn_01",
+      "label": "ok",
+      "action": null
+    },
+    {
+      "id": "silo_01",
+      "label": "ok",
+      "action": null
+    },
+    {
+      "id": "tractor_01",
+      "label": "ok",
+      "action": null
+    },
+    {
+      "id": "trough_01",
+      "label": "ok",
+      "action": null
+    },
+    {
+      "id": "crate_01",
+      "label": "ok",
+      "action": null
+    },
+    {
+      "id": "fence_01",
+      "label": "ok",
+      "action": null
+    },
+    {
+      "id": "hay_01",
+      "label": "ok",
+      "action": null
+    },
+    {
+      "id": "crop_01",
+      "label": "ok",
+      "action": null
+    }
+  ],
+  "retry_counts": {}
+}
