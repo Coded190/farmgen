@@ -10,10 +10,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from farmgen.log import log_line
 from farmgen.scene import Scene
+from farmgen.views import pose_in_bounds, uv_to_plot_xy
 
 LABELS = frozenset(
     {
@@ -24,13 +25,16 @@ LABELS = frozenset(
         "overlapping",
         "not_agricultural",
         "wrong_orientation",
+        "wrong_yaw",
+        "wrong_place",
     }
 )
-ACTIONS = frozenset({"redo_ground", "redo_asset", "reorient", "redo_image", "redo_place"})
+ACTIONS = frozenset({"redo_ground", "redo_asset", "reorient", "redo_image", "redo_place", "turn", "move"})
+YAW_DEGREES = frozenset({0, 90, 180, 270})
 # A judge score at or below this value is stored and does not schedule a redo.
 SCORE_OK_MAX = 4
 MAX_RETRIES = 2
-_CATALOG_ACTIONS = frozenset({"redo_asset", "reorient", "redo_image"})
+_CATALOG_ACTIONS = frozenset({"redo_asset", "reorient", "redo_image", "turn"})
 
 
 class VerdictEntry(BaseModel):
@@ -38,6 +42,10 @@ class VerdictEntry(BaseModel):
     label: str
     action: str | None = None
     score: int | None = None
+    yaw_deg: float | None = None
+    u: float | None = None
+    v: float | None = None
+    index: int | None = None
 
     @field_validator("label")
     @classmethod
@@ -64,6 +72,12 @@ class VerdictEntry(BaseModel):
             raise ValueError("score must be from 0 to 10")
         return value
 
+    @model_validator(mode="after")
+    def _yaw_rule(self) -> "VerdictEntry":
+        if self.action == "turn" and self.yaw_deg is not None and float(self.yaw_deg) not in YAW_DEGREES:
+            raise ValueError("yaw_deg must be 0, 90, 180, or 270")
+        return self
+
 
 class Verdict(BaseModel):
     entries: list[VerdictEntry]
@@ -74,6 +88,11 @@ class RedoAction(BaseModel):
     action: str
     id: str
     label: str
+    yaw_deg: float | None = None
+    u: float | None = None
+    v: float | None = None
+    index: int | None = None
+    xy: tuple[float, float] | None = None
 
 
 def load_verdict(path: Path) -> Verdict:
@@ -96,7 +115,7 @@ def plan_redos(scene: Scene, verdict: Verdict) -> tuple[list[RedoAction], list[s
     accepted: list[RedoAction] = []
     ignored: list[str] = []
     for entry in verdict.entries:
-        if entry.score is not None and entry.score <= SCORE_OK_MAX:
+        if entry.score is not None and entry.score <= SCORE_OK_MAX and entry.label != "wrong_place":
             continue
         if entry.label == "ok" or entry.action is None:
             continue
@@ -111,10 +130,43 @@ def plan_redos(scene: Scene, verdict: Verdict) -> tuple[list[RedoAction], list[s
         if entry.action == "redo_ground" and entry.id != "ground":
             ignored.append(f"ignore redo_ground on id={entry.id}")
             continue
+        if entry.action == "turn" and entry.yaw_deg is None:
+            ignored.append(f"ignore turn without yaw_deg id={entry.id}")
+            continue
+        xy = None
+        if entry.action == "move":
+            if entry.id not in catalog:
+                ignored.append(f"ignore move on id={entry.id}")
+                continue
+            if entry.u is None or entry.v is None or entry.yaw_deg is None:
+                ignored.append(f"ignore move without u,v,yaw_deg id={entry.id}")
+                continue
+            try:
+                xy = uv_to_plot_xy(entry.u, entry.v, scene.ground.terrain_m, scene.ground.plot_m)
+            except ValueError as exc:
+                ignored.append(f"ignore move id={entry.id} {exc}")
+                continue
+            layout = scene.asset(entry.id).layout
+            if not pose_in_bounds(xy, layout, scene.ground.terrain_m, scene.ground.plot_m):
+                ignored.append(
+                    f"ignore move outside id={entry.id} xy={xy[0]:.2f},{xy[1]:.2f} layout={layout}"
+                )
+                continue
         if spent >= MAX_RETRIES:
             ignored.append(f"ignore retry cap id={target} spent={spent}")
             continue
-        accepted.append(RedoAction(action=entry.action, id=target, label=entry.label))
+        accepted.append(
+            RedoAction(
+                action=entry.action,
+                id=target,
+                label=entry.label,
+                yaw_deg=entry.yaw_deg,
+                u=entry.u,
+                v=entry.v,
+                index=entry.index,
+                xy=xy,
+            )
+        )
     return accepted, ignored
 
 

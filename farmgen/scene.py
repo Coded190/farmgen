@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
-Layout = Literal["unique", "line", "grid", "rows"]
+Layout = Literal["unique", "line", "grid", "rows", "surround", "perimeter"]
 
 
 class GroundSpec(BaseModel):
@@ -16,7 +16,7 @@ class GroundSpec(BaseModel):
     material: str = "tilled_soil"
     terrain_m: tuple[float, float] = (120.0, 120.0)
     relief_m: float = 0.4
-    surround_relief_m: float = 4.0
+    surround_relief_m: float = 0.6
 
     @field_validator("size_m", "terrain_m")
     @classmethod
@@ -48,6 +48,9 @@ class AssetSpec(BaseModel):
     mesh_path: str | None = None
     cache_key: str | None = None
     orient: str = "y_up"
+    photo_url: str | None = None
+    seen_photo_urls: list[str] = Field(default_factory=list)
+    field_m: tuple[float, float] | None = None
     instances: list[Instance] = Field(default_factory=list)
 
     @field_validator("id")
@@ -136,35 +139,310 @@ def assets_from_catalog(payload: dict) -> list[AssetSpec]:
     return assets
 
 
-def catalog_or_starter(scene: Scene, ask, attempts: int = 2) -> Scene:
-    """Ask for a catalog up to ``attempts`` times, then keep the handwritten list.
+def catalog_text(
+    brief: str,
+    plot_m: tuple[float, float] = (40.0, 40.0),
+    terrain_m: tuple[float, float] = (120.0, 120.0),
+    *,
+    repair_id: str | None = None,
+    error: str | None = None,
+    name_from_images: bool = False,
+) -> str:
+    """The catalog request, including the yard limits a footprint must satisfy."""
+    width, depth = float(plot_m[0]), float(plot_m[1])
+    ring = min(float(terrain_m[0]) - width, float(terrain_m[1]) - depth) / 2.0 - 2.0
+    usable = min(width, depth) - 2.0
+    text = (
+        "Write a farm asset list as JSON. "
+        'Schema: {"assets":[{"id":"barn_01","prompt":"...","size_m":[12,8,7],'
+        '"count":1,"layout":"unique"}]}. '
+        "layout is unique, line, grid, rows, surround, or perimeter. unique requires count 1. "
+        "surround copies sit outside the placement plot. "
+        "Each prompt names exactly one object. Do not name a tree and a bush in the same prompt. "
+        "A surround asset is one object, such as one tree or one bush, not a ring of them. "
+        f"One tree uses about as many copies as the ring can hold, each at most 8 meters. "
+        "A fence encloses the yard: perimeter segments of at least 2 meters, not one straight line and not a tiny post. "
+        "A field, pasture, or other ground-sized surface is one plant about 1 meter, layout rows, copied across that field. "
+        "size_m is width, depth, height in meters. "
+        f"The placement plot is {width:.0f} by {depth:.0f} meters. "
+        "A surround asset is one repeatable object, with count at least 2, "
+        "and each copy at most 8 meters on width and depth. "
+        "Do not use one mesh for the whole ring. "
+        f"A yard asset must be at most half the plot, {width / 2:.0f} by {depth / 2:.0f} meters, "
+        "so other yard objects can sit beside it. "
+        f"A surround footprint must also be under {ring:.0f} meters on width and depth. "
+        f"A line's width times its count must be under {usable:.0f} meters. "
+        f"Request: {brief}"
+    )
+    if name_from_images:
+        text += " The images show the scene. Name the objects in them. Those objects are the asset list."
+    if repair_id is not None:
+        text += (
+            f" Change only {repair_id}. The previous footprint does not fit: {error}. "
+            "Return JSON for that one asset and keep its id."
+        )
+    return text
 
-    ``ask`` receives the scene brief and returns a JSON object. A bad payload
-    or a connection error is one try. It does not start image generation.
+
+def catalog_or_starter(scene: Scene, ask, attempts: int = 2, images=None, record_dir: Path | None = None) -> Scene:
+    """Keep Qwen's asset list. Repair one unfit asset instead of substituting the starter list.
+
+    ``ask(prompt)`` or ``ask(prompt, images)`` returns a JSON object. A connection
+    error or a payload that is not a catalog is retried. A footprint that cannot
+    sit in the yard is sent back for that id only. Assets that were valid stay.
     """
+    import inspect
+
     from farmgen.log import log_line
 
+    def _ask(prompt: str):
+        parameters = inspect.signature(ask).parameters
+        if len(parameters) >= 2 or any(item.kind is inspect.Parameter.VAR_POSITIONAL for item in parameters.values()):
+            return ask(prompt, images)
+        return ask(prompt)
+
+    pictures = list(images or [])
     last = "none"
+    loaded = False
     for attempt in range(1, attempts + 1):
+        payload = None
         try:
-            payload = ask(scene.brief)
+            payload = _ask(
+                catalog_text(
+                    scene.brief,
+                    scene.ground.plot_m,
+                    scene.ground.terrain_m,
+                    name_from_images=bool(pictures),
+                )
+            )
             scene.assets = assets_from_catalog(payload)
+            loaded = True
+            break
         except (OSError, RuntimeError, TypeError, ValueError, ValidationError) as exc:
             last = str(exc).replace("\n", " ")
+            _record_catalog(record_dir, attempt, payload)
             log_line(scene.id, scene.seed, "catalog", attempt=attempt, ok=0, error=last)
-            continue
-        log_line(scene.id, scene.seed, "catalog", attempt=attempt, ok=1, assets=len(scene.assets))
+    if not loaded:
+        log_line(scene.id, scene.seed, "catalog", note="kept", error=last, assets=len(scene.assets))
         return scene
-    scene.assets = starter_scene().assets
-    log_line(scene.id, scene.seed, "catalog", fallback="starter", error=last, assets=len(scene.assets))
+
+    for repair in range(1, attempts + 1):
+        error = _first_fit_error(scene)
+        if error is None:
+            normalize_catalog(scene)
+            log_line(scene.id, scene.seed, "catalog", attempt=repair, ok=1, assets=len(scene.assets))
+            return scene
+        asset_id = error.split(" ", 1)[0]
+        _record_catalog(record_dir, repair, {"error": error, "assets": [asset.model_dump() for asset in scene.assets]})
+        log_line(scene.id, scene.seed, "catalog", repair=repair, id=asset_id, error=error)
+        try:
+            repaired = _ask(
+                catalog_text(
+                    scene.brief,
+                    scene.ground.plot_m,
+                    scene.ground.terrain_m,
+                    repair_id=asset_id,
+                    error=error,
+                    name_from_images=bool(pictures),
+                )
+            )
+            _replace_asset(scene, asset_id, repaired)
+        except (OSError, RuntimeError, TypeError, ValueError, ValidationError) as exc:
+            last = str(exc).replace("\n", " ")
+            log_line(scene.id, scene.seed, "catalog", repair=repair, id=asset_id, ok=0, error=last)
+    normalize_catalog(scene)
+    error = _first_fit_error(scene)
+    if error is not None:
+        asset_id = error.split(" ", 1)[0]
+        scene.assets = [asset for asset in scene.assets if asset.id != asset_id]
+        log_line(scene.id, scene.seed, "catalog", id=asset_id, note="unplaceable", error=error)
+    log_line(scene.id, scene.seed, "catalog", ok=1, assets=len(scene.assets))
     return scene
 
 
+def _record_catalog(record_dir: Path | None, attempt: int, payload: object) -> None:
+    if record_dir is None or payload is None:
+        return
+    path = Path(record_dir) / f"catalog_attempt_{attempt}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def _first_fit_error(scene: Scene) -> str | None:
+    try:
+        _assert_placeable(scene)
+    except ValueError as exc:
+        return str(exc)
+    return None
+
+
+def _replace_asset(scene: Scene, asset_id: str, payload: dict) -> None:
+    """Replace one catalog id. Every other asset stays."""
+    if not isinstance(payload, dict):
+        raise ValueError("repair payload is not an object")
+    if "assets" in payload:
+        found = [asset for asset in assets_from_catalog(payload) if asset.id == asset_id]
+        if not found:
+            raise ValueError(f"repair missing {asset_id}")
+        replacement = found[0]
+    else:
+        payload = dict(payload)
+        payload["id"] = asset_id
+        replacement = AssetSpec.model_validate(payload)
+    scene.assets = [replacement if asset.id == asset_id else asset for asset in scene.assets]
+
+
+def is_ring_phrase(prompt: str) -> bool:
+    text = prompt.lower()
+    return "ring of" in text or text.startswith("a ring")
+
+
+def is_field(asset: AssetSpec) -> bool:
+    """A photo of the ground itself, rather than one object standing on it."""
+    if asset.field_m is not None:
+        return False
+    prompt = asset.prompt.lower()
+    height = float(asset.size_m[2])
+    span = max(float(asset.size_m[0]), float(asset.size_m[1]))
+    named = any(word in prompt for word in ("field", "pasture", "meadow"))
+    if named and "one " not in prompt and span >= 8.0:
+        return True
+    return height <= 0.5 and span >= 10.0
+
+
+def needs_perimeter(asset: AssetSpec) -> bool:
+    if "fence" not in asset.prompt.lower() or asset.layout == "perimeter":
+        return False
+    long_side = max(float(asset.size_m[0]), float(asset.size_m[1]))
+    return asset.layout == "line" or long_side < 2.0 or asset.count >= 20
+
+
+def normalize_catalog(scene: Scene) -> None:
+    """Turn a field, a line of posts, or a ring prompt into objects we can seat."""
+    from farmgen.placer import ring_slots
+
+    slots = ring_slots(scene.ground.plot_m, scene.ground.terrain_m, 8.0)
+    forest = [
+        asset
+        for asset in scene.assets
+        if asset.layout == "surround" and (is_ring_phrase(asset.prompt) or _fills_the_ring(asset, len(slots)))
+    ]
+    trees = [asset for asset in forest if _is_tree_prompt(asset.prompt)]
+    bushes = [asset for asset in forest if asset not in trees and _is_bush_prompt(asset.prompt)]
+    tree_count = len(slots)
+    bush_count = len(slots)
+    if trees and bushes:
+        bush_count = max(4, len(slots) // 4)
+        tree_count = max(2, len(slots) - bush_count)
+    for asset in scene.assets:
+        if is_field(asset):
+            _as_plant_grid(asset)
+        elif needs_perimeter(asset):
+            _as_perimeter(asset, scene.ground.plot_m)
+        elif asset in trees:
+            _as_one_object(asset, tree_count)
+        elif asset in bushes:
+            _as_one_object(asset, bush_count)
+
+
+def _is_tree_prompt(prompt: str) -> bool:
+    return "tree" in prompt.lower()
+
+
+def _is_bush_prompt(prompt: str) -> bool:
+    text = prompt.lower()
+    return "tree" not in text and ("bush" in text or "shrub" in text)
+
+
+def _fills_the_ring(asset: AssetSpec, slots: int) -> bool:
+    if not _is_tree_prompt(asset.prompt):
+        return False
+    return max(float(asset.size_m[0]), float(asset.size_m[1])) >= 7.5 and asset.count < slots
+
+
+def _as_plant_grid(asset: AssetSpec) -> None:
+    area = (float(asset.size_m[0]), float(asset.size_m[1]))
+    spacing = 2.0
+    cols = max(2, int(area[0] // spacing))
+    rows = max(2, int(area[1] // spacing))
+    asset.field_m = area
+    asset.size_m = (1.0, 1.0, 0.8)
+    asset.count = cols * rows
+    asset.layout = "rows"
+    asset.prompt = "one leafy green pasture plant with a short stem and several leaves, standing upright"
+
+
+def _as_perimeter(asset: AssetSpec, plot_m: tuple[float, float]) -> None:
+    from farmgen.placer import perimeter_samples
+
+    length = 2.4
+    thickness = 0.3
+    samples = perimeter_samples(plot_m, length, thickness)
+    asset.size_m = (length, thickness, 1.2)
+    asset.count = len(samples)
+    asset.layout = "perimeter"
+    asset.prompt = "one wooden farm fence segment with two rails between two posts, standing upright"
+
+
+def _as_one_object(asset: AssetSpec, slots: int) -> None:
+    asset.layout = "surround"
+    if _is_bush_prompt(asset.prompt):
+        asset.prompt = "one rounded green bush with dense leaves, standing upright"
+        asset.size_m = (6.0, 6.0, 2.0)
+        asset.count = max(2, slots)
+        return
+    asset.prompt = "one leafy deciduous tree with a brown trunk and a green canopy, standing upright"
+    asset.size_m = (8.0, 8.0, 8.0)
+    asset.count = max(2, slots)
+
+
+def _assert_placeable(scene: Scene) -> None:
+    """Reject a catalog whose footprints cannot sit in the plot or the ring."""
+    width, depth = scene.ground.plot_m
+    ring = min(scene.ground.terrain_m[0] - width, scene.ground.terrain_m[1] - depth) / 2.0 - 2.0
+    for asset in scene.assets:
+        span_x, span_y = asset.size_m[0], asset.size_m[1]
+        if is_ring_phrase(asset.prompt):
+            raise ValueError(f"{asset.id} surround must be one object, not a ring")
+        if is_field(asset):
+            raise ValueError(f"{asset.id} field must be one plant about 1 m, copied across the field")
+        if needs_perimeter(asset):
+            raise ValueError(f"{asset.id} fence must enclose the yard in segments of at least 2 m")
+        if asset.layout == "surround":
+            if asset.count < 2:
+                raise ValueError(f"{asset.id} surround needs several copies")
+            if span_x > 8.0 or span_y > 8.0 or span_x >= ring or span_y >= ring:
+                raise ValueError(f"{asset.id} surround size {span_x:.1f}x{span_y:.1f} m does not fit the ring")
+            continue
+        if asset.layout == "perimeter":
+            if max(span_x, span_y) < 2.0:
+                raise ValueError(f"{asset.id} fence segment {max(span_x, span_y):.1f} m is too short")
+            continue
+        half = min(width, depth) / 2.0
+        if span_x > half or span_y > half:
+            raise ValueError(f"{asset.id} size {span_x:.1f}x{span_y:.1f} m covers the yard")
+        if span_x >= width - 2.0 or span_y >= depth - 2.0:
+            raise ValueError(f"{asset.id} size {span_x:.1f}x{span_y:.1f} m does not fit the plot")
+        if asset.layout == "line" and span_x * asset.count >= width - 2.0:
+            raise ValueError(f"{asset.id} line does not fit the plot")
+
+
 def starter_scene() -> Scene:
-    """One farm. Unique props are one mesh each. Repeated props are one mesh, many copies."""
+    """One farm. Unique props are one mesh each. Repeated props are one mesh, many copies.
+
+    The three tree ids split the 8 m ring lattice, so their copies cover the
+    ground outside the 40 m yard. ``tree_02`` and ``tree_03`` are separate
+    TRELLIS meshes, not extra copies of ``tree_01``.
+    """
+    from farmgen.placer import ring_slots
+
+    slots = len(ring_slots((40.0, 40.0), (120.0, 120.0), 8.0))
+    each = slots // 3
+    tree_counts = (each + slots - 3 * each, each, each)
     return Scene(
         id="farm_000",
         seed=0,
+        brief="a small dairy farm with a barn, silo, tractor, fence, pasture crops, and a ring of trees and bushes covering the ground outside the yard.",
         ground=GroundSpec(size_m=(40.0, 40.0), material="tilled_soil"),
         assets=[
             AssetSpec(id="barn_01", prompt="a red wooden barn", size_m=(12.0, 8.0, 7.0), count=1, layout="unique"),
@@ -198,6 +476,48 @@ def starter_scene() -> Scene:
                 size_m=(0.6, 0.6, 1.8),
                 count=16,
                 layout="rows",
+            ),
+            AssetSpec(
+                id="wheat_01",
+                prompt="a patch of upright green wheat stalks with seed heads, growing from the soil",
+                size_m=(0.8, 0.8, 1.0),
+                count=16,
+                layout="rows",
+            ),
+            AssetSpec(
+                id="tree_01",
+                prompt="a leafy deciduous oak tree with a brown trunk and a broad green canopy, standing upright",
+                size_m=(8.0, 8.0, 10.0),
+                count=tree_counts[0],
+                layout="surround",
+            ),
+            AssetSpec(
+                id="tree_02",
+                prompt="a tall evergreen pine tree with a brown trunk and dense dark green needles, standing upright",
+                size_m=(8.0, 8.0, 12.0),
+                count=tree_counts[1],
+                layout="surround",
+            ),
+            AssetSpec(
+                id="tree_03",
+                prompt="a young leafy farm tree with a slim trunk and a light green canopy, standing upright",
+                size_m=(8.0, 8.0, 7.0),
+                count=tree_counts[2],
+                layout="surround",
+            ),
+            AssetSpec(
+                id="bush_01",
+                prompt="a low rounded green bush with dense leaves",
+                size_m=(1.8, 1.8, 1.4),
+                count=24,
+                layout="surround",
+            ),
+            AssetSpec(
+                id="bush_02",
+                prompt="a flowering shrub with green leaves and small white blossoms",
+                size_m=(2.2, 2.2, 1.6),
+                count=24,
+                layout="surround",
             ),
         ],
     )

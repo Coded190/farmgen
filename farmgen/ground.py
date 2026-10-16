@@ -153,6 +153,163 @@ def sample_height(
     return float(points[nearest, 2])
 
 
+def orient_ground_vertices(vertices: np.ndarray) -> np.ndarray:
+    """Put the short axis on Z and the tile corner at the origin.
+
+    A sheet whose long axes are X and Z arrives with the short axis on Y.
+    ``(x, y, z) -> (x, -z, y)`` lays that sheet on XY. An already flat tile
+    is only shifted so its minimum corner is the origin.
+    """
+    points = np.asarray(vertices, dtype=np.float64).copy()
+    if points.size == 0:
+        return points
+    extent = points.max(axis=0) - points.min(axis=0)
+    short = int(np.argmin(extent))
+    if short == 0:
+        points = np.column_stack((-points[:, 2], points[:, 1], points[:, 0]))
+    elif short == 1:
+        points = np.column_stack((points[:, 0], -points[:, 2], points[:, 1]))
+    points -= points.min(axis=0)
+    return points
+
+
+def fit_relief(
+    vertices: np.ndarray,
+    terrain_m: tuple[float, float],
+    plot_m: tuple[float, float],
+    relief_m: float,
+    surround_relief_m: float,
+) -> np.ndarray:
+    """Scale Z inside the plot and outside it. XY stays put."""
+    points = np.asarray(vertices, dtype=np.float64).copy()
+    if points.size == 0:
+        return points
+    inside = _plot_mask(points[:, :2], terrain_m, plot_m)
+    points[:, 2] = _fit_span(points[:, 2], inside, relief_m)
+    outside = ~inside
+    if np.any(outside):
+        points[:, 2] = _fit_span(points[:, 2], outside, surround_relief_m)
+        if np.any(inside):
+            # The ring's own span can stay, but its floor sits on the yard.
+            # A raw mesh whose hills start meters above the plot was a pit.
+            floor = float(np.median(points[inside, 2]))
+            outside_z = points[outside, 2]
+            points[outside, 2] = floor + (outside_z - float(outside_z.min()))
+    return points
+
+
+def _fit_span(z: np.ndarray, mask: np.ndarray, limit: float) -> np.ndarray:
+    if not np.any(mask):
+        return z
+    fitted = z.copy()
+    column = fitted[mask]
+    span = float(column.max() - column.min())
+    if span > limit and span > 0:
+        column = column.min() + (column - column.min()) * (limit / span)
+        fitted[mask] = column
+    return fitted
+
+
+def mesh_has_baked_color(mesh: trimesh.Trimesh) -> bool:
+    """True when vertex colors vary. A flat white default is not a bake."""
+    visual = getattr(mesh, "visual", None)
+    colors = getattr(visual, "vertex_colors", None)
+    if colors is None:
+        return False
+    rgb = np.asarray(colors)
+    if rgb.ndim != 2 or rgb.shape[0] != len(mesh.vertices) or rgb.shape[1] < 3:
+        return False
+    return float(rgb[:, :3].std()) > 1.0
+
+
+def cluster_ground(mesh: trimesh.Trimesh, face_limit: int = FACE_LIMIT) -> trimesh.Trimesh:
+    """Average vertices into a grid until the triangle count is under the cap."""
+    if len(mesh.faces) < face_limit:
+        return mesh
+    verts = np.asarray(mesh.vertices, dtype=np.float64)
+    faces = np.asarray(mesh.faces, dtype=np.int64)
+    colors = _color_array(mesh)
+    mins = verts.min(axis=0)
+    extent = float(np.maximum(verts.max(axis=0) - mins, 1e-6)[:2].max())
+    cell = max(extent / 400.0, 1e-3)
+    reduced = mesh
+    for _ in range(8):
+        reduced = _cluster_mesh(verts, faces, colors, mins, cell)
+        if len(reduced.faces) < face_limit:
+            return reduced
+        cell *= 1.6
+    return reduced
+
+
+def prepare_ground_mesh(
+    mesh: trimesh.Trimesh,
+    terrain_m: tuple[float, float],
+    plot_m: tuple[float, float],
+    relief_m: float,
+    surround_relief_m: float,
+) -> trimesh.Trimesh:
+    """Lay the tile flat, clamp relief, and keep the face count under the cap."""
+    prepared = mesh.copy()
+    prepared.vertices = orient_ground_vertices(np.asarray(mesh.vertices))
+    prepared.vertices = fit_relief(prepared.vertices, terrain_m, plot_m, relief_m, surround_relief_m)
+    if mesh_has_baked_color(mesh):
+        prepared.visual.vertex_colors = np.asarray(mesh.visual.vertex_colors)
+    return cluster_ground(prepared)
+
+
+def paint_field_colors(
+    mesh: trimesh.Trimesh,
+    terrain_m: tuple[float, float],
+    plot_m: tuple[float, float],
+) -> trimesh.Trimesh:
+    """Brown inside the plot and green in the surround. Used when no bake exists."""
+    colors = np.empty((len(mesh.vertices), 4), dtype=np.uint8)
+    colors[:, 3] = 255
+    inside = _plot_mask(np.asarray(mesh.vertices)[:, :2], terrain_m, plot_m)
+    colors[inside, :3] = (122, 74, 36)
+    colors[~inside, :3] = (62, 110, 42)
+    mesh.visual.vertex_colors = colors
+    return mesh
+
+
+def _color_array(mesh: trimesh.Trimesh) -> np.ndarray | None:
+    if not mesh_has_baked_color(mesh):
+        return None
+    return np.asarray(mesh.visual.vertex_colors)
+
+
+def _cluster_mesh(
+    verts: np.ndarray,
+    faces: np.ndarray,
+    colors: np.ndarray | None,
+    mins: np.ndarray,
+    cell: float,
+) -> trimesh.Trimesh:
+    idx = np.floor((verts - mins) / cell).astype(np.int64)
+    idx = np.ascontiguousarray(idx)
+    void = idx.view(np.dtype((np.void, idx.dtype.itemsize * idx.shape[1]))).ravel()
+    _uniq, inverse = np.unique(void, return_inverse=True)
+    counts = np.bincount(inverse).astype(np.float64)
+    acc = np.zeros((len(counts), 3), dtype=np.float64)
+    np.add.at(acc, inverse, verts)
+    new_verts = acc / counts[:, None]
+    new_colors = None
+    if colors is not None:
+        acc_c = np.zeros((len(counts), colors.shape[1]), dtype=np.float64)
+        np.add.at(acc_c, inverse, colors.astype(np.float64))
+        new_colors = np.clip(np.rint(acc_c / counts[:, None]), 0, 255).astype(np.uint8)
+    remapped = inverse[faces]
+    keep = (
+        (remapped[:, 0] != remapped[:, 1])
+        & (remapped[:, 1] != remapped[:, 2])
+        & (remapped[:, 0] != remapped[:, 2])
+    )
+    reduced = trimesh.Trimesh(vertices=new_verts, faces=remapped[keep], process=False)
+    if new_colors is not None:
+        reduced.visual.vertex_colors = new_colors
+    return reduced
+
+
 def terrain_mesh(
     terrain_m: tuple[float, float] = (120.0, 120.0),
     plot_m: tuple[float, float] = (40.0, 40.0),
@@ -190,7 +347,8 @@ def terrain_mesh(
             i = row * cols + col
             faces.append([i, i + 1, i + cols])
             faces.append([i + 1, i + cols + 1, i + cols])
-    return trimesh.Trimesh(vertices=vertices, faces=np.asarray(faces, dtype=np.int64), process=False)
+    mesh = trimesh.Trimesh(vertices=vertices, faces=np.asarray(faces, dtype=np.int64), process=False)
+    return paint_field_colors(mesh, terrain_m, plot_m)
 
 
 def flat_ground_mesh(size_m: tuple[float, float], divisions: int = 80) -> trimesh.Trimesh:

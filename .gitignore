@@ -1,5 +1,5 @@
 .venv/
-third_party/**/.venv/
+third_party/
 toolchains/
 outputs/
 __pycache__/

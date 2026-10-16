@@ -17,6 +17,11 @@ def build_scene(scene: Scene, ground_path: Path) -> trimesh.Scene:
     assembled = trimesh.Scene()
     if ground_path.is_file():
         ground = load_ground(ground_path)
+        colors = ground_path.with_suffix(".colors.npy")
+        if colors.is_file():
+            # A textured OBJ keeps TextureVisuals if vertex_colors is assigned
+            # in place, and the GLB then drops the paint.
+            ground.visual = trimesh.visual.ColorVisuals(mesh=ground, vertex_colors=np.load(colors))
     else:
         ground = terrain_mesh(
             scene.ground.terrain_m,
@@ -28,8 +33,12 @@ def build_scene(scene: Scene, ground_path: Path) -> trimesh.Scene:
     assembled.add_geometry(ground, node_name="ground", geom_name="ground")
     origin_x, origin_y = plot_origin(scene.ground.terrain_m, scene.ground.plot_m)
     for asset in scene.assets:
+        if not asset.instances:
+            log_line(scene.id, scene.seed, "compose", id=asset.id, note="unplaced")
+            continue
         if not asset.mesh_path:
-            raise ValueError(f"{asset.id} has no mesh_path")
+            log_line(scene.id, scene.seed, "compose", id=asset.id, note="no mesh")
+            continue
         mesh_path = Path(asset.mesh_path)
         if not mesh_path.is_file():
             raise FileNotFoundError(mesh_path)
@@ -90,13 +99,25 @@ def write_usd(assembled: trimesh.Scene, path: Path) -> Path:
         transform, geom_name = assembled.graph[node_name]
         geom = assembled.geometry[geom_name]
         points = trimesh.transformations.transform_points(np.asarray(geom.vertices, dtype=np.float64), transform)
-        _add_mesh(stage, _usd_name(node_name), points, np.asarray(geom.faces))
+        _add_mesh(stage, _usd_name(node_name), points, np.asarray(geom.faces), _vertex_rgb(geom))
     stage.GetRootLayer().Save()
     return path
 
 
-def _add_mesh(stage, name: str, points: np.ndarray, faces: np.ndarray) -> None:
-    from pxr import Gf, UsdGeom, Vt
+def _vertex_rgb(geom) -> np.ndarray | None:
+    """RGB in 0..1, one color per vertex, when the mesh carries vertex colors."""
+    visual = getattr(geom, "visual", None)
+    raw = getattr(visual, "vertex_colors", None)
+    if raw is None:
+        return None
+    colors = np.asarray(raw)
+    if colors.ndim != 2 or len(colors) != len(geom.vertices) or colors.shape[1] < 3:
+        return None
+    return np.asarray(colors[:, :3], dtype=np.float64) / 255.0
+
+
+def _add_mesh(stage, name: str, points: np.ndarray, faces: np.ndarray, colors: np.ndarray | None) -> None:
+    from pxr import Gf, Sdf, UsdGeom, UsdShade, Vt
 
     mesh = UsdGeom.Mesh.Define(stage, f"/World/{name}")
     mesh.CreatePointsAttr([Gf.Vec3f(float(p[0]), float(p[1]), float(p[2])) for p in points])
@@ -104,6 +125,26 @@ def _add_mesh(stage, name: str, points: np.ndarray, faces: np.ndarray) -> None:
     mesh.CreateFaceVertexIndicesAttr(Vt.IntArray(faces.reshape(-1).tolist()))
     mesh.CreateSubdivisionSchemeAttr(UsdGeom.Tokens.none)
     mesh.CreateDoubleSidedAttr(True)
+    if colors is not None:
+        primvar = UsdGeom.PrimvarsAPI(mesh.GetPrim()).CreatePrimvar(
+            "displayColor",
+            Sdf.ValueTypeNames.Color3fArray,
+            UsdGeom.Tokens.vertex,
+        )
+        primvar.Set([Gf.Vec3f(float(c[0]), float(c[1]), float(c[2])) for c in colors])
+        mean = colors.mean(axis=0)
+    else:
+        mean = np.array([0.45, 0.42, 0.38])
+    material = UsdShade.Material.Define(stage, f"/World/Looks/{name}")
+    shader = UsdShade.Shader.Define(stage, f"/World/Looks/{name}/Preview")
+    shader.CreateIdAttr("UsdPreviewSurface")
+    shader.CreateInput("diffuseColor", Sdf.ValueTypeNames.Color3f).Set(
+        Gf.Vec3f(float(mean[0]), float(mean[1]), float(mean[2]))
+    )
+    shader.CreateInput("roughness", Sdf.ValueTypeNames.Float).Set(0.8)
+    shader.CreateOutput("surface", Sdf.ValueTypeNames.Token)
+    material.CreateSurfaceOutput().ConnectToSource(shader.ConnectableAPI(), "surface")
+    UsdShade.MaterialBindingAPI(mesh.GetPrim()).Bind(material)
 
 
 def _usd_name(name: str) -> str:

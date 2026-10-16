@@ -54,3 +54,60 @@ def test_low_score_does_not_schedule_and_reorient_shares_the_cap():
     again, ignored_again = plan_redos(scene, shared)
     assert again == []
     assert any("retry cap id=tractor_01" in item for item in ignored_again)
+
+
+def test_wrong_place_is_kept_when_the_score_is_acceptable():
+    scene = starter_scene()
+    verdict = Verdict(
+        entries=[
+            VerdictEntry(id="barn_01", label="wrong_place", action="move", score=2, u=0.5, v=0.5, yaw_deg=0),
+            VerdictEntry(id="tractor_01", label="wrong_yaw", action="turn", score=2, yaw_deg=90),
+        ]
+    )
+    actions, ignored = plan_redos(scene, verdict)
+    assert ignored == []
+    assert [(action.id, action.action) for action in actions] == [("barn_01", "move")]
+
+
+def test_move_keeps_a_point_inside_the_yard_and_drops_one_outside():
+    scene = starter_scene()
+    inside = Verdict(
+        entries=[
+            VerdictEntry(id="barn_01", label="wrong_place", action="move", score=8, u=0.5, v=0.5, yaw_deg=15.0),
+        ]
+    )
+    actions, ignored = plan_redos(scene, inside)
+    assert ignored == []
+    assert actions[0].action == "move"
+    assert actions[0].xy == (20.0, 20.0)
+    assert actions[0].yaw_deg == 15.0
+
+    outside = Verdict(
+        entries=[
+            VerdictEntry(id="barn_01", label="wrong_place", action="move", score=8, u=0.0, v=0.0, yaw_deg=10),
+        ]
+    )
+    none, notes = plan_redos(scene, outside)
+    assert none == []
+    assert any("outside" in item for item in notes)
+
+
+def test_wrong_yaw_schedules_a_turn_only_above_the_score_limit():
+    scene = starter_scene()
+    loud = Verdict(
+        entries=[
+            VerdictEntry(id="barn_01", label="wrong_yaw", action="turn", score=6, yaw_deg=90),
+        ]
+    )
+    actions, ignored = plan_redos(scene, loud)
+    assert ignored == []
+    assert [(action.action, action.yaw_deg) for action in actions] == [("turn", 90)]
+    assert all(action.action != "reorient" for action in actions)
+
+    quiet = Verdict(
+        entries=[
+            VerdictEntry(id="barn_01", label="wrong_yaw", action="turn", score=4, yaw_deg=90),
+        ]
+    )
+    none, _notes = plan_redos(scene, quiet)
+    assert none == []

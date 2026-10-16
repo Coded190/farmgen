@@ -9,6 +9,7 @@ def test_cache_key_changes_with_prompt_and_size(tmp_path, monkeypatch):
     assert barn != other_prompt
     assert barn != other_size
     assert cache_key("  a red wooden barn  ", (12, 8, 7)) == barn
+    assert cache_key("a red wooden barn", (12.0, 8.0, 7.0), image_sha256="abc") != barn
     assert not cache_hit(barn)
     cache_path(barn).write_bytes(b"mesh")
     assert cache_hit(barn)

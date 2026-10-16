@@ -13,6 +13,9 @@ scene.waterbody_chance = 0
 scene.volcanos_chance = 0
 scene.ground_ice_chance = 0
 
+fine_terrain.mesher_backend = "OcMesher"
+OcMesher.pixels_per_cube = 32
+
 Ground.scale = 20
 Ground.height = 4
 Ground.with_sand_dunes = 0
