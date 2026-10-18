@@ -10,13 +10,15 @@ import base64
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 from farmgen.critic import Verdict, VerdictEntry
-from farmgen.gpu import QWEN_BUDGET_MIB, wait_for_vram
+from farmgen.gpu import QWEN_BUDGET_MIB
 from farmgen.paths import repo_root
 
 VLM_URL = "http://127.0.0.1:8080/v1/chat/completions"
@@ -56,16 +58,219 @@ def weights_dir() -> Path:
     return repo_root() / "third_party" / "Qwen3-VL-30B-A3B-Instruct"
 
 
-def stop_server() -> None:
-    global _SERVER
-    if _SERVER is None:
-        return
-    _SERVER.terminate()
+def cmdline_is_our_vllm(cmdline: str, root: str) -> bool:
+    """True for the farmgen vLLM serve process. Another user's server does not match."""
+    return "vllm" in cmdline and "serve" in cmdline and str(root) in cmdline
+
+
+def _parent_pid(pid: int) -> int | None:
+    from farmgen.gpu import ppid_from_stat
+
     try:
-        _SERVER.wait(timeout=30)
-    except subprocess.TimeoutExpired:
-        _SERVER.kill()
-    _SERVER = None
+        text = open(f"/proc/{int(pid)}/stat", encoding="utf-8").read()
+    except OSError:
+        return None
+    return ppid_from_stat(text)
+
+
+def _proc_cmdline(pid: int) -> str:
+    try:
+        raw = Path(f"/proc/{int(pid)}/cmdline").read_bytes()
+    except OSError:
+        return ""
+    return raw.replace(b"\x00", b" ").decode("utf-8", errors="replace")
+
+
+def our_vllm_pids() -> list[int]:
+    """Serve pids whose command line is this repo's vLLM. EngineCore is their child."""
+    root = str(repo_root())
+    found: list[int] = []
+    proc = Path("/proc")
+    if not proc.is_dir():
+        return found
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        if cmdline_is_our_vllm(_proc_cmdline(int(entry.name)), root):
+            found.append(int(entry.name))
+    return found
+
+
+def descendants_of(roots: list[int], *, children=None) -> list[int]:
+    """Every process under ``roots``, not including the roots themselves."""
+    if children is None:
+        by_parent: dict[int, list[int]] = {}
+        proc = Path("/proc")
+        if proc.is_dir():
+            for entry in proc.iterdir():
+                if not entry.name.isdigit():
+                    continue
+                pid = int(entry.name)
+                parent = _parent_pid(pid)
+                if parent is not None:
+                    by_parent.setdefault(parent, []).append(pid)
+
+        def children(pid: int) -> list[int]:
+            return by_parent.get(pid, [])
+    found: list[int] = []
+    seen = set(roots)
+    queue = list(roots)
+    while queue:
+        current = queue.pop(0)
+        for child in children(current):
+            if child in seen:
+                continue
+            seen.add(child)
+            found.append(child)
+            queue.append(child)
+    return found
+
+
+def orphan_engine_pids() -> list[int]:
+    """``VLLM::EngineCore`` reparented to init whose environ still names this repo.
+
+    A live serve pid owns its engine through the process tree. This finds the
+    engine only after that parent has already exited. Another user's engine
+    does not have this repo path in its environment.
+    """
+    root = str(repo_root()).encode()
+    found: list[int] = []
+    proc = Path("/proc")
+    if not proc.is_dir():
+        return found
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        pid = int(entry.name)
+        if "VLLM::EngineCore" not in _proc_cmdline(pid):
+            continue
+        parent = _parent_pid(pid)
+        if parent is not None and parent > 1:
+            continue
+        try:
+            env = (entry / "environ").read_bytes()
+        except OSError:
+            continue
+        if root in env:
+            found.append(pid)
+    return found
+
+
+def stop_targets() -> list[int]:
+    """Serve pids, their descendants, and an EngineCore left behind by a dead parent."""
+    pids: list[int] = []
+    if _SERVER is not None and _SERVER.poll() is None:
+        pids.append(_SERVER.pid)
+    for pid in our_vllm_pids():
+        if pid not in pids:
+            pids.append(pid)
+    targets = list(pids)
+    for pid in descendants_of(pids):
+        if pid not in targets:
+            targets.append(pid)
+    for pid in orphan_engine_pids():
+        if pid not in targets:
+            targets.append(pid)
+    return targets
+
+
+def _signal_own_group(pid: int, sig: int) -> None:
+    """Signal a session this repo started. A shared group is left alone."""
+    try:
+        pgid = os.getpgid(pid)
+    except OSError:
+        return
+    if pgid != pid:
+        return
+    try:
+        os.killpg(pgid, sig)
+    except OSError:
+        return
+
+
+def stop_server() -> None:
+    """Stop the vLLM this run started, including ``VLLM::EngineCore``.
+
+    The serve command is matched on this repo's path. Descendants are taken
+    before the signal, because the engine's own command line is ``VLLM::EngineCore``
+    and does not name the repo. A supervisor is its own session, so that
+    session is signaled too. A process outside that tree is left running.
+    """
+    global _SERVER
+    targets = stop_targets()
+    for pid in targets:
+        _signal_own_group(pid, signal.SIGTERM)
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except OSError:
+            continue
+    if _SERVER is not None:
+        try:
+            _SERVER.wait(timeout=30)
+        except subprocess.TimeoutExpired:
+            _SERVER.kill()
+        _SERVER = None
+    deadline = time.monotonic() + 30
+    for pid in targets:
+        while time.monotonic() < deadline:
+            try:
+                os.kill(pid, 0)
+            except OSError:
+                break
+            time.sleep(0.2)
+        else:
+            _signal_own_group(pid, signal.SIGKILL)
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except OSError:
+                pass
+    if targets:
+        from farmgen.log import log_line
+
+        log_line("farmgen", 0, "vlm", note="stopped", pids=targets)
+
+
+_SUPERVISOR = """
+import ctypes
+import os
+import signal
+import sys
+
+def _stop(_signum, _frame):
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    try:
+        os.killpg(os.getpgrp(), signal.SIGTERM)
+    except OSError:
+        pass
+    os._exit(0)
+
+os.setsid()
+ctypes.CDLL(None).prctl(1, int(signal.SIGTERM))
+signal.signal(signal.SIGTERM, _stop)
+signal.signal(signal.SIGINT, _stop)
+if os.getppid() == 1:
+    _stop(signal.SIGTERM, None)
+pid = os.fork()
+if pid == 0:
+    ctypes.CDLL(None).prctl(1, int(signal.SIGTERM))
+    if os.getppid() == 1:
+        os._exit(0)
+    os.execvp(sys.argv[1], sys.argv[1:])
+try:
+    os.waitpid(pid, 0)
+except OSError:
+    pass
+"""
+
+
+def supervised_command(cmd: list[str]) -> list[str]:
+    """Run vLLM in its own session and signal that session when farmgen exits.
+
+    ``PR_SET_PDEATHSIG`` delivers SIGTERM to this supervisor when its parent
+    dies, including a kill that never runs Python cleanup. The handler signals
+    the whole session, so ``VLLM::EngineCore`` is not left holding the GPU.
+    """
+    return [sys.executable, "-c", _SUPERVISOR, *cmd]
 
 
 def ensure_server() -> None:
@@ -74,8 +279,14 @@ def ensure_server() -> None:
     if not (weights_dir() / "config.json").is_file():
         raise RuntimeError(f"qwen weights missing at {weights_dir()}")
     if _port_open():
+        from farmgen.gpu import note_own_pid
+
+        for pid in our_vllm_pids():
+            note_own_pid(pid)
         return
-    wait_for_vram(QWEN_BUDGET_MIB, stop_own=stop_server, on_event=_log_gpu)
+    from farmgen.gpu import note_own_pid, wait_for_plan
+
+    plan = wait_for_plan(QWEN_BUDGET_MIB, stop_own=stop_server, on_event=_log_gpu)
     cmd = [
         _vllm_executable(),
         "serve",
@@ -98,7 +309,17 @@ def ensure_server() -> None:
     log_file = log_path.open("a", encoding="utf-8")
     log_file.write(f"\n# vllm start {' '.join(cmd)}\n")
     log_file.flush()
-    _SERVER = subprocess.Popen(cmd, cwd=repo_root(), env=_vllm_env(), stdout=log_file, stderr=subprocess.STDOUT)
+    env = _vllm_env()
+    if plan.qwen >= 0:
+        env["CUDA_VISIBLE_DEVICES"] = str(plan.qwen)
+    _SERVER = subprocess.Popen(
+        supervised_command(cmd),
+        cwd=repo_root(),
+        env=env,
+        stdout=log_file,
+        stderr=subprocess.STDOUT,
+    )
+    note_own_pid(_SERVER.pid)
     deadline = time.monotonic() + 1800
     while time.monotonic() < deadline:
         if _SERVER.poll() is not None:
@@ -112,18 +333,89 @@ def ensure_server() -> None:
     raise RuntimeError("vllm did not open port 8080")
 
 
-def request_catalog(prompt: str, images=None, post=None) -> dict:
+@dataclass(frozen=True)
+class CatalogAnswer:
+    """Parsed catalog JSON plus the model text that produced it."""
+
+    payload: dict
+    reply: str
+
+
+def request_catalog(prompt: str, images=None, post=None) -> CatalogAnswer:
     ensure_server()
     body = complete(catalog_message(prompt, images), post=post)
-    return parse_catalog(body)
+    return CatalogAnswer(parse_catalog(body), _message_text(body))
 
 
-def request_mesh_gate(asset_id: str, prompt: str, images: list[Path], post=None):
+def request_catalog_gate(brief: str, assets: list, images=None, post=None):
+    """Accept or reject a finished asset list. This pass does not write a new list."""
+    from farmgen.mesh_gate import MeshDecision
+
+    ensure_server()
+    body = complete(catalog_gate_payload(brief, assets, images), post=post)
+    decision = parse_mesh_gate(body, "catalog")
+    return MeshDecision(decision.accept, decision.reason, _message_text(body)[:4000])
+
+
+def catalog_gate_payload(brief: str, assets: list, images=None, missing: list[str] | None = None) -> dict:
+    from farmgen.scene import missing_required
+
+    rows = [_catalog_row(asset) for asset in assets]
+    pictures = [Path(image) for image in (images or [])]
+    absent = list(missing) if missing is not None else missing_required(brief, assets)
+    text = (
+        f"The request was: {brief}. "
+        "Accept this asset list only when it names the objects in that request"
+        + (" and the objects in the images." if pictures else ".")
+        + " Reject a list that misses a named object, describes a different farm, or puts two objects in one prompt. "
+        "Do not rewrite the list. "
+    )
+    if absent:
+        text += f" These required objects are absent after normalization: {', '.join(absent)}. Reject the list. "
+    text += (
+        'Reply with JSON {"id":"catalog","accept":true,"reason":""} and fill reason. '
+        f"Assets: {json.dumps(rows)}"
+    )
+    content: str | list[dict] = [{"type": "text", "text": text}]
+    if pictures:
+        content.extend(_image_content(image) for image in pictures)
+    else:
+        content = text
+    return {
+        "model": VLM_MODEL,
+        "temperature": 0,
+        "messages": [{"role": "user", "content": content}],
+    }
+
+
+def _catalog_row(asset: object) -> dict:
+    if isinstance(asset, dict):
+        return {key: asset.get(key) for key in ("id", "prompt", "size_m", "count", "layout")}
+    return {
+        "id": asset.id,
+        "prompt": asset.prompt,
+        "size_m": list(asset.size_m),
+        "count": asset.count,
+        "layout": asset.layout,
+    }
+
+
+def _message_text(body: dict) -> str:
+    try:
+        reply = body["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError):
+        return ""
+    if not isinstance(reply, str):
+        return str(reply)
+    return reply
+
+
+def request_mesh_gate(asset_id: str, prompt: str, images: list[Path], post=None, note: str = ""):
     """Qwen's accept flag, the reason sentence, and the raw reply text."""
     from farmgen.mesh_gate import MeshDecision
 
     ensure_server()
-    body = complete(mesh_gate_payload(asset_id, prompt, images), post=post)
+    body = complete(mesh_gate_payload(asset_id, prompt, images, note=note), post=post)
     decision = parse_mesh_gate(body, asset_id)
     reply = ""
     try:
@@ -214,10 +506,11 @@ def parse_plant_box(body: dict, asset_id: str) -> tuple[float, float, float, flo
         return None
 
 
-def request_verdict(kind: str, ids: list[str], images: list[Path], post=None) -> Verdict:
+def request_verdict(kind: str, ids: list[str], images: list[Path], post=None, note: str = "") -> Verdict:
     ensure_server()
-    body = complete(verdict_payload(kind, ids, images), post=post)
-    return parse_verdict(body)
+    body = complete(verdict_payload(kind, ids, images, note=note), post=post)
+    verdict = parse_verdict(body)
+    return verdict.model_copy(update={"reply": _message_text(body)})
 
 
 def poses_payload(
@@ -225,6 +518,7 @@ def poses_payload(
     image: Path,
     required: list[tuple[str, int]] | None = None,
     problems: list[tuple[str, int, str]] | None = None,
+    placed: str = "",
 ) -> dict:
     """Ask for one pose per instance, as a point on the top image."""
     copies = ""
@@ -240,7 +534,10 @@ def poses_payload(
         "The green area around it is the ring. "
         "Place every copy on its own point. Do not give every asset the same u and v. "
         "A yard asset stays inside the brown square, apart from the other yard assets. "
+        "The south 18 meters of the yard, the lower part of the brown square, is the crop band. "
+        "A barn, silo, tractor, trough, crate, or hay bale goes in the north 22 meters. "
         "A surround asset goes in the green ring, outside the brown square. "
+        "Look at the environment in the image, then write a point that fits beside the objects already placed. "
         "Reply with JSON "
         '{"poses":[{"id":"barn_01","index":0,"u":0.50,"v":0.50,"yaw_deg":0},'
         '{"id":"tree_01","index":0,"u":0.20,"v":0.20,"yaw_deg":0}]}. '
@@ -249,6 +546,8 @@ def poses_payload(
         "yaw_deg is degrees about Z. One pose per copy, so index runs from 0 to count-1. "
         f"Ids: {', '.join(ids)}.{copies}"
     )
+    if placed:
+        prompt += f" Already placed: {placed}."
     if problems:
         rejected = "; ".join(f"{asset_id} index {index} {reason}" for asset_id, index, reason in problems)
         prompt += f" Previous points were rejected: {rejected}. Choose a different point."
@@ -264,10 +563,11 @@ def request_poses(
     image: Path,
     required: list[tuple[str, int]] | None = None,
     problems: list[tuple[str, int, str]] | None = None,
+    placed: str = "",
     post=None,
 ) -> list[dict]:
     ensure_server()
-    body = complete(poses_payload(ids, image, required, problems), post=post)
+    body = complete(poses_payload(ids, image, required, problems, placed), post=post)
     return parse_poses(body)
 
 
@@ -300,12 +600,22 @@ def catalog_payload(brief: str, plot_m=(40.0, 40.0), terrain_m=(120.0, 120.0), i
     return catalog_message(text, images)
 
 
-def mesh_gate_payload(asset_id: str, prompt: str, images: list[Path]) -> dict:
+def mesh_gate_payload(asset_id: str, prompt: str, images: list[Path], note: str = "") -> dict:
+    measure = ""
+    if note:
+        measure = (
+            " A following note reports flatness, the sheet-area fraction, and the non-manifold edge count. "
+            "An edge-on sheet in the first picture is a reject. "
+            f"{note} "
+        )
     text = (
-        "The pictures before the last are orthogonal views of one isolated mesh, stood upright. "
+        "The first picture is the thinnest view of one isolated mesh, stood upright. "
+        "The pictures before the last are the other views. "
         "The last picture is the photo that mesh was built from. These pictures are not the farm scene. "
         f"Accept the mesh only when these views show one {prompt}. "
-        "Reject a forest, a collage, a logo, a flat card, or the wrong object. "
+        "Reject a forest, a collage, a logo, the wrong object, or an edge-on sheet. "
+        "A flat card seen from the thin side is a reject even when another view looks like the object. "
+        f"{measure}"
         "The reason must be your own sentence about the object in the first picture. "
         f'Reply with JSON {{"id":"{asset_id}","accept":true,"reason":""}} '
         "and fill reason. Do not leave it blank and do not copy this instruction."
@@ -354,21 +664,83 @@ def _image_content(path: Path) -> dict:
     return {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{encoded}"}}
 
 
-def verdict_payload(kind: str, ids: list[str], images: list[Path]) -> dict:
+def _stage_prompt(kind: str, ids: list[str], note: str) -> str | None:
+    joined = ", ".join(ids)
+    extra = f" {note}" if note else ""
+    score = "A label other than ok schedules its action even when the score is 4 or below. "
+    if kind == "ground":
+        return (
+            "Judge the ground only. The pictures are the kept terrain. "
+            "Accept tilled soil when the yard is visually distinct from the ring around it. "
+            'Reply with JSON {"entries":[{"id":"ground","label":"ok","action":null,"score":0}]}. '
+            "label is ok or not_agricultural. action is null or redo_ground. "
+            f"{score}{extra} Ids: {joined}."
+        )
+    if kind == "image":
+        return (
+            "Judge each picture against the asset it belongs to. "
+            "A web photo and a Flux picture use the same rule: the picture must show that one object. "
+            'Reply with JSON {"entries":[{"id":"...","label":"ok","action":null,"score":0}]}. '
+            "label is ok or missing. A wrong object uses action redo_image. "
+            f"{score}{extra} Ids: {joined}."
+        )
+    if kind == "mesh":
+        return (
+            "Judge each TRELLIS mesh thumbnail against its asset. "
+            "Reject a flat card, a collage, or the wrong object. "
+            "A flatness number and a non-manifold edge count in the note are measurements. "
+            "The pictures decide. "
+            'Reply with JSON {"entries":[{"id":"...","label":"ok","action":null,"score":0}]}. '
+            "label is ok or missing. A bad mesh uses action redo_asset. "
+            f"{score}{extra} Ids: {joined}."
+        )
+    if kind == "scale":
+        return (
+            "The pictures are yaw 0, 90, 180, and 270 of each mesh stood on the ground. "
+            "Read the vertical height in the front view and compare it with the meters in the id. "
+            "Not upright is wrong_orientation and action reorient. "
+            "The wrong size is wrong_scale and action redo_asset. "
+            'Reply with JSON {"entries":[{"id":"...","label":"ok","action":null,"score":0}]}. '
+            f"{score}{extra} Ids: {joined}."
+        )
+    if kind == "pose":
+        return (
+            "Judge the stored poses. Do not invent a new point in this call. "
+            "The top image is the environment the points were written on. "
+            'Reply with JSON {"entries":[{"id":"...","label":"ok","action":null,"score":0,"index":0}]}. '
+            "label is ok or wrong_place. A reject asks for a new point and uses action move. "
+            f"{score}{extra} Ids: {joined}."
+        )
+    return None
+
+
+def verdict_payload(kind: str, ids: list[str], images: list[Path], note: str = "") -> dict:
     facing = ""
+    specific = _stage_prompt(kind, ids, note)
+    if specific is not None:
+        prompt = specific
+        content: list[dict] = [{"type": "text", "text": prompt}]
+        for image in images:
+            content.append(_image_content(Path(image)))
+        return {
+            "model": VLM_MODEL,
+            "temperature": 0,
+            "messages": [{"role": "user", "content": content}],
+        }
     if kind == "place":
         prompt = (
             "Judge placement only. Reply with JSON "
             '{"entries":[{"id":"...","label":"ok","action":null,"score":0,"index":0,"u":0.5,"v":0.5,"yaw_deg":0}]}. '
             "The brown square is the yard. The green area is the ring. "
-            "score is 0 to 10. A score of 4 or below means acceptable, except wrong_place. "
+            "score is 0 to 10. A label other than ok schedules its action even when the score is 4 or below. "
             "label is ok or wrong_place. action is null or move. "
             "A yard asset that shares another asset's ground point is wrong_place. "
             "A surround asset inside the yard, or absent from the green ring, is wrong_place. "
-            "wrong_place requires action move, even when the score is 4 or below. "
+            "wrong_place requires action move. "
             "A move includes index, u, v, and yaw_deg. u and v are 0 to 1 on the top view. "
             "u 0 is the left edge and v 0 is the top edge. "
             "Mesh shape was judged earlier. Do not use redo_asset. "
+            f"{note} "
             f"Ids: {', '.join(ids)}."
         )
         content: list[dict] = [{"type": "text", "text": prompt}]
@@ -381,6 +753,7 @@ def verdict_payload(kind: str, ids: list[str], images: list[Path]) -> dict:
         }
     if kind == "scene":
         facing = (
+            " The first picture is the top view when that file is present. "
             " Also judge heading about Z for every id. "
             "A realistic heading means a barn door faces the open yard, "
             "a tractor front points along open ground rather than into a building or fence, "
@@ -397,7 +770,7 @@ def verdict_payload(kind: str, ids: list[str], images: list[Path]) -> dict:
     prompt = (
         f"Judge this farm {kind}. Reply with JSON "
         '{"entries":[{"id":"...","label":"ok","action":null,"score":0,"yaw_deg":null}]}. '
-        "score is 0 to 10. A score of 4 or below means acceptable. "
+        "score is 0 to 10. A label other than ok schedules its action even when the score is 4 or below. "
         "label is ok, missing, wrong_scale, floating, overlapping, "
         "not_agricultural, wrong_orientation, wrong_yaw, or wrong_place. "
         "action is null, redo_ground, redo_asset, reorient, redo_image, redo_place, turn, or move. "
@@ -408,6 +781,7 @@ def verdict_payload(kind: str, ids: list[str], images: list[Path]) -> dict:
         "index is the copy, starting at 0. A wrong mesh uses redo_asset and does not include a pose. "
         "The ground id is ground and its action is redo_ground. "
         f"{facing}"
+        f"{note} "
         f"Ids: {', '.join(ids)}."
     )
     content: list[dict] = [{"type": "text", "text": prompt}]

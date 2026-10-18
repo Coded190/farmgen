@@ -10,6 +10,7 @@ dependencies = [
     "pillow",
     "requests",
     "usd-core",
+    "fast-simplification",
 ]
 
 [project.scripts]

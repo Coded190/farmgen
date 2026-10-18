@@ -18,29 +18,39 @@
   "assets": [
     {
       "id": "barn_01",
-      "prompt": "a small wooden barn with a sloped roof and a large door",
+      "prompt": "a wooden barn",
       "size_m": [
-        12.0,
-        8.0,
+        5.491562856547306,
+        6.086668123860003,
         7.0
       ],
       "count": 1,
       "layout": "unique",
-      "image_path": "/home/cmoore/workspace/env_gen/outputs/farm_000/images/barn_01.png",
-      "mesh_path": "/home/cmoore/workspace/env_gen/outputs/farm_000/assets/barn_01.glb",
-      "cache_key": "cd2bd489604cb33daea48cf65d6667bcebc4bd14f4f15df9887460f4dfb05738",
+      "image_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/images/barn_01.png",
+      "mesh_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/assets/barn_01.glb",
+      "cache_key": "d3e13058d7da7e0ee93026294d64d11ef6f7a9b5981a24d57ab9699cfd893b43",
       "orient": "y_up",
-      "photo_url": "https://thumbs.dreamstime.com/b/isolated-barn-white-background-symbolizing-farming-rural-life-agriculture-barn-isolated-white-background-364106589.jpg",
+      "photo_url": "https://img.freepik.com/premium-psd/old-barn-isolated-transparent-background_220739-119183.jpg",
       "seen_photo_urls": [
-        "https://thumbs.dreamstime.com/b/isolated-barn-white-background-symbolizing-farming-rural-life-agriculture-barn-isolated-white-background-364106589.jpg"
+        "https://img.freepik.com/premium-psd/old-barn-isolated-transparent-background_220739-119183.jpg"
       ],
+      "accepted": [
+        "mesh"
+      ],
+      "mesh_image_sha": "",
       "field_m": null,
+      "field_origin": null,
+      "achieved_m": [
+        5.491562856547306,
+        6.086668123860003,
+        7.0
+      ],
       "instances": [
         {
           "index": 0,
           "xy": [
-            20.0,
-            20.0
+            19.0,
+            21.0
           ],
           "yaw": 0.0,
           "z": 0.009080539999999998
@@ -49,23 +59,35 @@
     },
     {
       "id": "silo_01",
-      "prompt": "a tall cylindrical silo made of metal",
+      "prompt": "a metal silo",
       "size_m": [
         3.0,
-        12.0,
-        12.0
+        3.048600556525477,
+        3.5809133322398745
       ],
       "count": 1,
       "layout": "unique",
-      "image_path": "/home/cmoore/workspace/env_gen/outputs/farm_000/images/silo_01.png",
-      "mesh_path": "/home/cmoore/workspace/env_gen/outputs/farm_000/assets/silo_01.glb",
-      "cache_key": "47162f885876cdf1a4637c75b23ac24d72d757f39303de5cc132ec2f68413ae1",
+      "image_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/images/silo_01.png",
+      "mesh_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/assets/silo_01.glb",
+      "cache_key": "dfdf9def2ac5b945f41b9864ff769e0cc6a8a212f770c7ad6b744278544d1593",
       "orient": "y_up",
-      "photo_url": "https://img.freepik.com/premium-psd/silo-isolated-transparent-background_1073071-20305.jpg?w=1060",
+      "photo_url": "https://img.freepik.com/premium-photo/3d-illustration-steel-silo-isolated-white-background_839035-1813613.jpg?w=1380",
       "seen_photo_urls": [
-        "https://img.freepik.com/premium-psd/silo-isolated-transparent-background_1073071-20305.jpg?w=1060"
+        "https://img.freepik.com/premium-psd/silo-isolated-transparent-background_1073071-20305.jpg?w=1060",
+        "https://img.freepik.com/premium-photo/3d-illustration-steel-silo-isolated-white-background_839035-1813613.jpg?w=1380"
       ],
+      "accepted": [
+        "image",
+        "mesh"
+      ],
+      "mesh_image_sha": "",
       "field_m": null,
+      "field_origin": null,
+      "achieved_m": [
+        3.0,
+        3.048600556525477,
+        3.5809133322398745
+      ],
       "instances": [
         {
           "index": 0,
@@ -80,697 +102,130 @@
     },
     {
       "id": "tractor_01",
-      "prompt": "a red tractor parked near the barn",
+      "prompt": "a farm tractor",
       "size_m": [
-        3.0,
-        2.0,
-        2.0
+        4.5,
+        2.2,
+        2.8
       ],
       "count": 1,
       "layout": "unique",
-      "image_path": "/home/cmoore/workspace/env_gen/outputs/farm_000/images/tractor_01.png",
-      "mesh_path": "/home/cmoore/workspace/env_gen/outputs/farm_000/assets/tractor_01.glb",
-      "cache_key": "8deb3ef6180dd154c35907a3db550fd76ff0f90a41cf9ed6273fbe8a753db676",
+      "image_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/images/tractor_01.png",
+      "mesh_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/assets/tractor_01.glb",
+      "cache_key": "dad7d27e901a0b6ed3d29c81953888f7a50d63984745ab402041ec217aef889a",
       "orient": "y_up",
       "photo_url": "https://img.freepik.com/premium-psd/red-tractor-isolated-transparent-background_879541-866.jpg?w=740",
       "seen_photo_urls": [
         "https://img.freepik.com/premium-psd/red-tractor-isolated-transparent-background_679658-62266.jpg?w=2000",
         "https://img.freepik.com/premium-psd/red-tractor-isolated-transparent-background_879541-866.jpg?w=740"
       ],
+      "accepted": [
+        "mesh"
+      ],
+      "mesh_image_sha": "",
       "field_m": null,
+      "field_origin": null,
+      "achieved_m": [
+        1.4873007081456417,
+        2.2,
+        1.4345639589696504
+      ],
       "instances": [
         {
           "index": 0,
           "xy": [
-            11.5,
-            14.0
+            1.743650354072821,
+            37.300000000000004
           ],
           "yaw": 0.0,
-          "z": 0.00908054
+          "z": 0.0090808
         }
       ]
     },
     {
       "id": "fence_perimeter",
-      "prompt": "perimeter fence segment",
+      "prompt": "a wooden fence segment",
       "size_m": [
-        2.0,
-        0.5,
-        1.8
+        2.4,
+        0.3,
+        1.2
       ],
-      "count": 68,
+      "count": 296,
       "layout": "perimeter",
-      "image_path": "/home/cmoore/workspace/env_gen/outputs/farm_000/images/fence_perimeter.png",
-      "mesh_path": "/home/cmoore/workspace/env_gen/outputs/farm_000/assets/fence_perimeter.glb",
-      "cache_key": "47dcaa9b6bf2d5264c6339e9df6b99692950bec92069d9cc24a98a22c5b3dd2e",
+      "image_path": null,
+      "mesh_path": null,
+      "cache_key": null,
       "orient": "y_up",
-      "photo_url": "https://thumbs.dreamstime.com/b/rustic-wooden-fence-segment-isolated-white-background-image-features-composed-weathered-uneven-planks-439291069.jpg",
+      "photo_url": "https://img.freepik.com/premium-psd/wooden-fence-isolated-white_176841-90273.jpg",
       "seen_photo_urls": [
-        "https://thumbs.dreamstime.com/b/rustic-wooden-fence-segment-isolated-white-background-image-features-composed-weathered-uneven-planks-439291069.jpg"
+        "https://thumbs.dreamstime.com/b/rustic-wooden-fence-segment-isolated-white-background-image-features-composed-weathered-uneven-planks-439291069.jpg",
+        "https://thumbs.dreamstime.com/b/image-features-wooden-fence-section-isolated-white-background-fence-consists-horizontal-wooden-planks-supported-424805594.jpg",
+        "https://img.freepik.com/premium-psd/rustic-wooden-fence-isolated-transparent-white-background_1134599-21096.jpg",
+        "https://img.freepik.com/premium-psd/wooden-fence-isolated-white_176841-90273.jpg"
       ],
+      "accepted": [],
+      "mesh_image_sha": "",
       "field_m": null,
-      "instances": [
-        {
-          "index": 0,
-          "xy": [
-            2.291666666666667,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 1,
-          "xy": [
-            2.291666666666667,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.0090808
-        },
-        {
-          "index": 2,
-          "xy": [
-            4.375,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 3,
-          "xy": [
-            4.375,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.0090808
-        },
-        {
-          "index": 4,
-          "xy": [
-            6.458333333333334,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 5,
-          "xy": [
-            6.458333333333334,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.0090808
-        },
-        {
-          "index": 6,
-          "xy": [
-            8.541666666666668,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 7,
-          "xy": [
-            8.541666666666668,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.0090808
-        },
-        {
-          "index": 8,
-          "xy": [
-            10.625,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 9,
-          "xy": [
-            10.625,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.0090808
-        },
-        {
-          "index": 10,
-          "xy": [
-            12.708333333333334,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 11,
-          "xy": [
-            12.708333333333334,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.009080725713157172
-        },
-        {
-          "index": 12,
-          "xy": [
-            14.791666666666668,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 13,
-          "xy": [
-            14.791666666666668,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 14,
-          "xy": [
-            16.875,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 15,
-          "xy": [
-            16.875,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 16,
-          "xy": [
-            18.958333333333336,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 17,
-          "xy": [
-            18.958333333333336,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 18,
-          "xy": [
-            21.041666666666668,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 19,
-          "xy": [
-            21.041666666666668,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 20,
-          "xy": [
-            23.125,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 21,
-          "xy": [
-            23.125,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 22,
-          "xy": [
-            25.208333333333336,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 23,
-          "xy": [
-            25.208333333333336,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 24,
-          "xy": [
-            27.291666666666668,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 25,
-          "xy": [
-            27.291666666666668,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 26,
-          "xy": [
-            29.375000000000004,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.009080499845229899
-        },
-        {
-          "index": 27,
-          "xy": [
-            29.375000000000004,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 28,
-          "xy": [
-            31.458333333333336,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.011174715602947253
-        },
-        {
-          "index": 29,
-          "xy": [
-            31.458333333333336,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 30,
-          "xy": [
-            33.54166666666667,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.018941241162749166
-        },
-        {
-          "index": 31,
-          "xy": [
-            33.54166666666667,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 32,
-          "xy": [
-            35.625,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.018941241162749166
-        },
-        {
-          "index": 33,
-          "xy": [
-            35.625,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 34,
-          "xy": [
-            37.708333333333336,
-            1.25
-          ],
-          "yaw": 0.0,
-          "z": 0.06308510674353962
-        },
-        {
-          "index": 35,
-          "xy": [
-            37.708333333333336,
-            38.75
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 36,
-          "xy": [
-            1.25,
-            4.296875
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 37,
-          "xy": [
-            38.75,
-            4.296875
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.08150479440861433
-        },
-        {
-          "index": 38,
-          "xy": [
-            1.25,
-            6.390625
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 39,
-          "xy": [
-            38.75,
-            6.390625
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.06393760753027869
-        },
-        {
-          "index": 40,
-          "xy": [
-            1.25,
-            8.484375
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 41,
-          "xy": [
-            38.75,
-            8.484375
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 42,
-          "xy": [
-            1.25,
-            10.578125
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 43,
-          "xy": [
-            38.75,
-            10.578125
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 44,
-          "xy": [
-            1.25,
-            12.671875
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 45,
-          "xy": [
-            38.75,
-            12.671875
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 46,
-          "xy": [
-            1.25,
-            14.765625
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 47,
-          "xy": [
-            38.75,
-            14.765625
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 48,
-          "xy": [
-            1.25,
-            16.859375
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 49,
-          "xy": [
-            38.75,
-            16.859375
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 50,
-          "xy": [
-            1.25,
-            18.953125
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 51,
-          "xy": [
-            38.75,
-            18.953125
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 52,
-          "xy": [
-            1.25,
-            21.046875
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 53,
-          "xy": [
-            38.75,
-            21.046875
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 54,
-          "xy": [
-            1.25,
-            23.140625
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.009080540000000002
-        },
-        {
-          "index": 55,
-          "xy": [
-            38.75,
-            23.140625
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 56,
-          "xy": [
-            1.25,
-            25.234375
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 57,
-          "xy": [
-            38.75,
-            25.234375
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 58,
-          "xy": [
-            1.25,
-            27.328125
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 59,
-          "xy": [
-            38.75,
-            27.328125
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 60,
-          "xy": [
-            1.25,
-            29.421875
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 61,
-          "xy": [
-            38.75,
-            29.421875
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 62,
-          "xy": [
-            1.25,
-            31.515625
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054975356121
-        },
-        {
-          "index": 63,
-          "xy": [
-            38.75,
-            31.515625
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.00908054
-        },
-        {
-          "index": 64,
-          "xy": [
-            1.25,
-            33.609375
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.0090808
-        },
-        {
-          "index": 65,
-          "xy": [
-            38.75,
-            33.609375
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 66,
-          "xy": [
-            1.25,
-            35.703125
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.0090808
-        },
-        {
-          "index": 67,
-          "xy": [
-            38.75,
-            35.703125
-          ],
-          "yaw": 1.5707963267948966,
-          "z": 0.009080539999999998
-        }
-      ]
+      "field_origin": null,
+      "achieved_m": [
+        1.4896816011669343,
+        0.05594078421066311,
+        1.2
+      ],
+      "instances": []
     },
     {
       "id": "pasture_crop",
-      "prompt": "a field of green grass with small wildflowers",
+      "prompt": "a green pasture plant",
       "size_m": [
-        1.0,
-        1.0,
+        0.6894035874510241,
+        0.6212700605730261,
         0.5
       ],
-      "count": 1600,
-      "layout": "grid",
-      "image_path": "/home/cmoore/workspace/env_gen/outputs/farm_000/images/pasture_crop.png",
-      "mesh_path": "/home/cmoore/workspace/env_gen/outputs/farm_000/assets/pasture_crop.glb",
-      "cache_key": "cc7752d117a18c20a7a55771c7e8c2242c0724e31fd46d2de629b0c056a6cc99",
+      "count": 48,
+      "layout": "rows",
+      "image_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/images/pasture_crop.png",
+      "mesh_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/assets/pasture_crop.glb",
+      "cache_key": "fc692faaa2cd6ca43260ff50d754842a5a85e8ddbf49dbeecad4952c94250861",
       "orient": "y_up",
-      "photo_url": "https://thumbs.dreamstime.com/z/isolated-green-grass-turf-alpha-mask-easy-object-isolation-d-illustration-d-illustration-features-lush-vibrant-318695854.jpg?w=576",
+      "photo_url": "https://thumbs.dreamstime.com/b/green-plant-isolated-white-background-full-depth-field-illustration-green-plant-isolated-white-background-full-282970157.jpg",
       "seen_photo_urls": [
         "https://img.freepik.com/premium-vector/green-grass-isolated-transparent-background_1270823-1938.jpg?w=2000",
         "https://img.freepik.com/premium-vector/green-grass-isolated-transparent-background_1270823-1922.jpg",
-        "https://thumbs.dreamstime.com/z/isolated-green-grass-turf-alpha-mask-easy-object-isolation-d-illustration-d-illustration-features-lush-vibrant-318695854.jpg?w=576"
+        "https://thumbs.dreamstime.com/z/isolated-green-grass-turf-alpha-mask-easy-object-isolation-d-illustration-d-illustration-features-lush-vibrant-318695854.jpg?w=576",
+        "https://thumbs.dreamstime.com/b/green-plant-isolated-white-background-full-depth-field-illustration-green-plant-isolated-white-background-full-282676121.jpg",
+        "https://thumbs.dreamstime.com/b/green-plant-isolated-white-background-full-depth-field-illustration-green-plant-isolated-white-background-full-282967807.jpg",
+        "https://png.pngtree.com/png-vector/20250218/ourlarge/pngtree-single-green-plant-isolated-against-a-clean-background-png-image_15507968.png",
+        "https://img.freepik.com/premium-psd/green-plant-isolated-transparent-background_84443-13361.jpg?w=2000",
+        "https://img.freepik.com/premium-psd/green-plant-isolated-transparent-background_191095-47487.jpg?w=2000",
+        "https://img.freepik.com/premium-psd/green-plant-pot-isolated-transparent-background_883101-35765.jpg",
+        "https://thumbs.dreamstime.com/b/green-plant-isolated-white-background-full-depth-field-illustration-green-plant-isolated-white-background-full-282970157.jpg",
+        "https://thumbs.dreamstime.com/b/green-plant-isolated-white-background-full-depth-field-illustration-green-plant-isolated-white-background-full-282967633.jpg"
       ],
-      "field_m": null,
+      "accepted": [
+        "image",
+        "mesh"
+      ],
+      "mesh_image_sha": "",
+      "field_m": [
+        12.0,
+        16.0
+      ],
+      "field_origin": [
+        1.0,
+        2.0
+      ],
+      "achieved_m": [
+        0.689403587451024,
+        0.6212700605730261,
+        0.49999999999999994
+      ],
       "instances": [
         {
           "index": 0,
           "xy": [
-            11.5,
-            25.5
+            2.0,
+            3.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -778,8 +233,8 @@
         {
           "index": 1,
           "xy": [
-            29.5,
-            29.5
+            4.0,
+            3.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -787,17 +242,17 @@
         {
           "index": 2,
           "xy": [
-            29.5,
-            9.5
+            6.0,
+            3.0
           ],
           "yaw": 0.0,
-          "z": 0.00908054
+          "z": 0.009080539999999998
         },
         {
           "index": 3,
           "xy": [
-            23.5,
-            13.5
+            8.0,
+            3.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -805,8 +260,8 @@
         {
           "index": 4,
           "xy": [
-            23.5,
-            25.5
+            10.0,
+            3.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -814,26 +269,26 @@
         {
           "index": 5,
           "xy": [
-            7.5,
-            7.5
+            12.0,
+            3.0
           ],
           "yaw": 0.0,
-          "z": 0.00908054
+          "z": 0.009080540000000002
         },
         {
           "index": 6,
           "xy": [
-            9.5,
-            31.5
+            2.0,
+            5.0
           ],
           "yaw": 0.0,
-          "z": 0.00908054
+          "z": 0.009080539999999998
         },
         {
           "index": 7,
           "xy": [
-            7.5,
-            19.5
+            4.0,
+            5.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -841,8 +296,8 @@
         {
           "index": 8,
           "xy": [
-            17.5,
-            27.5
+            6.0,
+            5.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -850,8 +305,8 @@
         {
           "index": 9,
           "xy": [
-            13.5,
-            7.5
+            8.0,
+            5.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -859,44 +314,44 @@
         {
           "index": 10,
           "xy": [
-            17.5,
-            13.5
+            10.0,
+            5.0
           ],
           "yaw": 0.0,
-          "z": 0.00908054
+          "z": 0.009080540000000002
         },
         {
           "index": 11,
           "xy": [
-            13.5,
-            19.5
+            12.0,
+            5.0
+          ],
+          "yaw": 0.0,
+          "z": 0.009080540000000002
+        },
+        {
+          "index": 12,
+          "xy": [
+            2.0,
+            7.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
         },
         {
-          "index": 12,
+          "index": 13,
           "xy": [
-            33.5,
-            13.5
+            4.0,
+            7.0
           ],
           "yaw": 0.0,
           "z": 0.009080539999999998
         },
         {
-          "index": 13,
-          "xy": [
-            33.5,
-            23.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
           "index": 14,
           "xy": [
-            25.5,
-            33.5
+            6.0,
+            7.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -904,17 +359,17 @@
         {
           "index": 15,
           "xy": [
-            33.5,
-            33.5
+            8.0,
+            7.0
           ],
           "yaw": 0.0,
-          "z": 0.00908054
+          "z": 0.009080540000000002
         },
         {
           "index": 16,
           "xy": [
-            15.5,
-            33.5
+            10.0,
+            7.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -922,17 +377,17 @@
         {
           "index": 17,
           "xy": [
-            7.5,
-            27.5
+            12.0,
+            7.0
           ],
           "yaw": 0.0,
-          "z": 0.00908054
+          "z": 0.009080540000000002
         },
         {
           "index": 18,
           "xy": [
-            13.5,
-            29.5
+            2.0,
+            9.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -940,8 +395,8 @@
         {
           "index": 19,
           "xy": [
-            25.5,
-            7.5
+            4.0,
+            9.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -949,17 +404,17 @@
         {
           "index": 20,
           "xy": [
-            27.5,
-            23.5
+            6.0,
+            9.0
           ],
           "yaw": 0.0,
-          "z": 0.00908054
+          "z": 0.009080539999999998
         },
         {
           "index": 21,
           "xy": [
-            33.5,
-            7.5
+            8.0,
+            9.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -967,8 +422,8 @@
         {
           "index": 22,
           "xy": [
-            5.5,
-            11.5
+            10.0,
+            9.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -976,8 +431,8 @@
         {
           "index": 23,
           "xy": [
-            5.5,
-            23.5
+            12.0,
+            9.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -985,8 +440,8 @@
         {
           "index": 24,
           "xy": [
-            5.5,
-            33.5
+            2.0,
+            11.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -994,17 +449,17 @@
         {
           "index": 25,
           "xy": [
-            27.5,
-            15.5
+            4.0,
+            11.0
           ],
           "yaw": 0.0,
-          "z": 0.00908054
+          "z": 0.009080539999999998
         },
         {
           "index": 26,
           "xy": [
-            5.5,
-            15.5
+            6.0,
+            11.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1012,8 +467,8 @@
         {
           "index": 27,
           "xy": [
-            23.5,
-            29.5
+            8.0,
+            11.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1021,8 +476,8 @@
         {
           "index": 28,
           "xy": [
-            29.5,
-            5.5
+            10.0,
+            11.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1030,17 +485,17 @@
         {
           "index": 29,
           "xy": [
-            29.5,
-            33.5
+            12.0,
+            11.0
           ],
           "yaw": 0.0,
-          "z": 0.00908054
+          "z": 0.009080540000000002
         },
         {
           "index": 30,
           "xy": [
-            33.5,
-            17.5
+            2.0,
+            13.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1048,8 +503,8 @@
         {
           "index": 31,
           "xy": [
-            33.5,
-            27.5
+            4.0,
+            13.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1057,8 +512,8 @@
         {
           "index": 32,
           "xy": [
-            17.5,
-            9.5
+            6.0,
+            13.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1066,8 +521,8 @@
         {
           "index": 33,
           "xy": [
-            9.5,
-            35.5
+            8.0,
+            13.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1075,26 +530,26 @@
         {
           "index": 34,
           "xy": [
-            9.5,
-            11.5
+            10.0,
+            13.0
           ],
           "yaw": 0.0,
-          "z": 0.00908054
+          "z": 0.009080540000000002
         },
         {
           "index": 35,
           "xy": [
-            13.5,
-            11.5
+            12.0,
+            13.0
           ],
           "yaw": 0.0,
-          "z": 0.00908054
+          "z": 0.009080540000000002
         },
         {
           "index": 36,
           "xy": [
-            21.5,
-            35.5
+            2.0,
+            15.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1102,8 +557,8 @@
         {
           "index": 37,
           "xy": [
-            17.5,
-            5.5
+            4.0,
+            15.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1111,8 +566,8 @@
         {
           "index": 38,
           "xy": [
-            21.5,
-            9.5
+            6.0,
+            15.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1120,8 +575,8 @@
         {
           "index": 39,
           "xy": [
-            20.0,
-            32.959999999999994
+            8.0,
+            15.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1129,26 +584,26 @@
         {
           "index": 40,
           "xy": [
-            5.5,
-            5.5
+            10.0,
+            15.0
           ],
           "yaw": 0.0,
-          "z": 0.009080539999999998
+          "z": 0.00908054
         },
         {
           "index": 41,
           "xy": [
-            20.0,
-            7.039999999999999
+            12.0,
+            15.0
           ],
           "yaw": 0.0,
-          "z": 0.009080539999999998
+          "z": 0.009080540000000002
         },
         {
           "index": 42,
           "xy": [
-            5.5,
-            29.5
+            2.0,
+            17.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1156,8 +611,8 @@
         {
           "index": 43,
           "xy": [
-            7.5,
-            13.5
+            4.0,
+            17.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1165,8 +620,8 @@
         {
           "index": 44,
           "xy": [
-            9.5,
-            5.5
+            6.0,
+            17.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1174,8 +629,8 @@
         {
           "index": 45,
           "xy": [
-            9.5,
-            17.5
+            8.0,
+            17.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1183,8 +638,8 @@
         {
           "index": 46,
           "xy": [
-            9.5,
-            21.5
+            10.0,
+            17.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -1192,2222 +647,8 @@
         {
           "index": 47,
           "xy": [
-            11.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 48,
-          "xy": [
-            11.5,
-            33.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080540000000002
-        },
-        {
-          "index": 49,
-          "xy": [
-            13.5,
-            23.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 50,
-          "xy": [
-            13.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 51,
-          "xy": [
-            15.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 52,
-          "xy": [
-            15.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 53,
-          "xy": [
-            17.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 54,
-          "xy": [
-            17.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 55,
-          "xy": [
-            19.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 56,
-          "xy": [
-            19.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 57,
-          "xy": [
-            19.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 58,
-          "xy": [
-            19.5,
-            29.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 59,
-          "xy": [
-            21.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 60,
-          "xy": [
-            23.5,
-            5.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 61,
-          "xy": [
-            25.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080540000000002
-        },
-        {
-          "index": 62,
-          "xy": [
-            25.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 63,
-          "xy": [
-            27.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 64,
-          "xy": [
-            27.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 65,
-          "xy": [
-            29.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 66,
-          "xy": [
-            31.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 67,
-          "xy": [
-            31.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 68,
-          "xy": [
-            31.5,
-            21.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 69,
-          "xy": [
-            31.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 70,
-          "xy": [
-            31.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 71,
-          "xy": [
-            35.5,
-            5.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 72,
-          "xy": [
-            35.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 73,
-          "xy": [
-            35.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 74,
-          "xy": [
-            35.5,
-            19.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 75,
-          "xy": [
-            35.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 76,
-          "xy": [
-            35.5,
-            29.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 77,
-          "xy": [
-            35.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 78,
-          "xy": [
-            7.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 79,
-          "xy": [
-            3.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 80,
-          "xy": [
-            11.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080540000000002
-        },
-        {
-          "index": 81,
-          "xy": [
-            3.5,
-            13.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 82,
-          "xy": [
-            3.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 83,
-          "xy": [
-            15.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 84,
-          "xy": [
-            3.5,
-            17.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 85,
-          "xy": [
-            19.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 86,
-          "xy": [
-            3.5,
-            21.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 87,
-          "xy": [
-            25.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 88,
-          "xy": [
-            3.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 89,
-          "xy": [
-            3.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.0090808
-        },
-        {
-          "index": 90,
-          "xy": [
-            31.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080354726133333
-        },
-        {
-          "index": 91,
-          "xy": [
-            3.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 92,
-          "xy": [
-            21.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 93,
-          "xy": [
-            27.5,
-            19.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 94,
-          "xy": [
-            3.5,
-            5.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 95,
-          "xy": [
-            3.5,
-            7.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 96,
-          "xy": [
-            3.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 97,
-          "xy": [
-            3.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 98,
-          "xy": [
-            3.5,
-            19.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 99,
-          "xy": [
-            3.5,
-            23.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080540000000002
-        },
-        {
-          "index": 100,
-          "xy": [
-            3.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 101,
-          "xy": [
-            3.5,
-            29.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 102,
-          "xy": [
-            3.5,
-            33.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080689693776161
-        },
-        {
-          "index": 103,
-          "xy": [
-            5.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 104,
-          "xy": [
-            5.5,
-            7.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 105,
-          "xy": [
-            5.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 106,
-          "xy": [
-            5.5,
-            13.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 107,
-          "xy": [
-            5.5,
-            17.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 108,
-          "xy": [
-            5.5,
-            19.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 109,
-          "xy": [
-            5.5,
-            21.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 110,
-          "xy": [
-            5.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 111,
-          "xy": [
-            5.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 112,
-          "xy": [
-            5.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 113,
-          "xy": [
-            5.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.0090808
-        },
-        {
-          "index": 114,
-          "xy": [
-            7.5,
-            5.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 115,
-          "xy": [
-            7.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 116,
-          "xy": [
-            7.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 117,
-          "xy": [
-            7.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 118,
-          "xy": [
-            7.5,
-            17.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 119,
-          "xy": [
-            7.5,
-            21.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080540000000002
-        },
-        {
-          "index": 120,
-          "xy": [
-            7.5,
-            23.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 121,
-          "xy": [
-            7.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 122,
-          "xy": [
-            7.5,
-            29.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080540000000002
-        },
-        {
-          "index": 123,
-          "xy": [
-            7.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080540000000002
-        },
-        {
-          "index": 124,
-          "xy": [
-            7.5,
-            33.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 125,
-          "xy": [
-            7.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908071070387717
-        },
-        {
-          "index": 126,
-          "xy": [
-            9.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 127,
-          "xy": [
-            9.5,
-            7.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 128,
-          "xy": [
-            9.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 129,
-          "xy": [
-            9.5,
-            13.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 130,
-          "xy": [
-            9.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 131,
-          "xy": [
-            9.5,
-            19.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 132,
-          "xy": [
-            9.5,
-            23.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 133,
-          "xy": [
-            9.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 134,
-          "xy": [
-            9.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 135,
-          "xy": [
-            9.5,
-            29.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 136,
-          "xy": [
-            9.5,
-            33.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 137,
-          "xy": [
-            11.5,
-            5.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 138,
-          "xy": [
-            11.5,
-            7.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 139,
-          "xy": [
-            11.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 140,
-          "xy": [
-            11.5,
-            17.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 141,
-          "xy": [
-            11.5,
-            19.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 142,
-          "xy": [
-            11.5,
-            21.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 143,
-          "xy": [
-            11.5,
-            23.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 144,
-          "xy": [
-            11.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 145,
-          "xy": [
-            11.5,
-            29.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 146,
-          "xy": [
-            11.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 147,
-          "xy": [
-            11.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 148,
-          "xy": [
-            13.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 149,
-          "xy": [
-            13.5,
-            5.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 150,
-          "xy": [
-            13.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 151,
-          "xy": [
-            13.5,
-            13.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 152,
-          "xy": [
-            13.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 153,
-          "xy": [
-            13.5,
-            17.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 154,
-          "xy": [
-            13.5,
-            21.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 155,
-          "xy": [
-            13.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 156,
-          "xy": [
-            13.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 157,
-          "xy": [
-            13.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 158,
-          "xy": [
-            13.5,
-            33.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 159,
-          "xy": [
-            15.5,
-            5.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 160,
-          "xy": [
-            15.5,
-            7.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 161,
-          "xy": [
-            15.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 162,
-          "xy": [
-            15.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 163,
-          "xy": [
-            15.5,
-            13.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 164,
-          "xy": [
-            15.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 165,
-          "xy": [
-            15.5,
-            29.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 166,
-          "xy": [
-            15.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 167,
-          "xy": [
-            15.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 168,
-          "xy": [
-            17.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 169,
-          "xy": [
-            17.5,
-            7.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 170,
-          "xy": [
-            17.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 171,
-          "xy": [
-            17.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 172,
-          "xy": [
-            17.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 173,
-          "xy": [
-            17.5,
-            29.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 174,
-          "xy": [
-            17.5,
-            33.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 175,
-          "xy": [
-            19.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 176,
-          "xy": [
-            19.5,
-            13.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 177,
-          "xy": [
-            19.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 178,
-          "xy": [
-            19.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 179,
-          "xy": [
-            21.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 180,
-          "xy": [
-            21.5,
-            5.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 181,
-          "xy": [
-            21.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 182,
-          "xy": [
-            21.5,
-            13.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 183,
-          "xy": [
-            21.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 184,
-          "xy": [
-            21.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 185,
-          "xy": [
-            21.5,
-            29.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 186,
-          "xy": [
-            23.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 187,
-          "xy": [
-            23.5,
-            7.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 188,
-          "xy": [
-            23.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 189,
-          "xy": [
-            23.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 190,
-          "xy": [
-            23.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 191,
-          "xy": [
-            23.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 192,
-          "xy": [
-            23.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 193,
-          "xy": [
-            23.5,
-            33.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 194,
-          "xy": [
-            23.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 195,
-          "xy": [
-            25.5,
-            5.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 196,
-          "xy": [
-            25.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 197,
-          "xy": [
-            25.5,
-            13.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 198,
-          "xy": [
-            25.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 199,
-          "xy": [
-            25.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 200,
-          "xy": [
-            25.5,
-            29.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 201,
-          "xy": [
-            25.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 202,
-          "xy": [
-            25.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 203,
-          "xy": [
-            27.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 204,
-          "xy": [
-            27.5,
-            5.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 205,
-          "xy": [
-            27.5,
-            7.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 206,
-          "xy": [
-            27.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 207,
-          "xy": [
-            27.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 208,
-          "xy": [
-            27.5,
-            13.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 209,
-          "xy": [
-            27.5,
-            17.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 210,
-          "xy": [
-            27.5,
-            21.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 211,
-          "xy": [
-            27.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 212,
-          "xy": [
-            27.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 213,
-          "xy": [
-            27.5,
-            29.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 214,
-          "xy": [
-            27.5,
-            33.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 215,
-          "xy": [
-            29.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 216,
-          "xy": [
-            29.5,
-            7.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 217,
-          "xy": [
-            29.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 218,
-          "xy": [
-            29.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080540000000002
-        },
-        {
-          "index": 219,
-          "xy": [
-            29.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 220,
-          "xy": [
-            29.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 221,
-          "xy": [
-            31.5,
-            5.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 222,
-          "xy": [
-            31.5,
-            7.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 223,
-          "xy": [
-            31.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 224,
-          "xy": [
-            31.5,
-            13.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 225,
-          "xy": [
-            31.5,
-            17.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 226,
-          "xy": [
-            31.5,
-            19.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 227,
-          "xy": [
-            31.5,
-            23.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 228,
-          "xy": [
-            31.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 229,
-          "xy": [
-            31.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 230,
-          "xy": [
-            31.5,
-            29.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 231,
-          "xy": [
-            31.5,
-            33.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 232,
-          "xy": [
-            33.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080343830018586
-        },
-        {
-          "index": 233,
-          "xy": [
-            33.5,
-            5.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 234,
-          "xy": [
-            33.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 235,
-          "xy": [
-            33.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 236,
-          "xy": [
-            33.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 237,
-          "xy": [
-            33.5,
-            19.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 238,
-          "xy": [
-            33.5,
-            21.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 239,
-          "xy": [
-            33.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 240,
-          "xy": [
-            33.5,
-            29.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 241,
-          "xy": [
-            33.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 242,
-          "xy": [
-            33.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 243,
-          "xy": [
-            35.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080343830018586
-        },
-        {
-          "index": 244,
-          "xy": [
-            35.5,
-            7.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 245,
-          "xy": [
-            35.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 246,
-          "xy": [
-            35.5,
-            13.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 247,
-          "xy": [
-            35.5,
-            17.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 248,
-          "xy": [
-            35.5,
-            21.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 249,
-          "xy": [
-            35.5,
-            23.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 250,
-          "xy": [
-            35.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 251,
-          "xy": [
-            35.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 252,
-          "xy": [
-            35.5,
-            33.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 253,
-          "xy": [
-            7.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080799999999998
-        },
-        {
-          "index": 254,
-          "xy": [
-            19.5,
-            5.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 255,
-          "xy": [
-            37.5,
-            9.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 256,
-          "xy": [
-            21.5,
-            33.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 257,
-          "xy": [
-            37.5,
-            7.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 258,
-          "xy": [
-            5.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.0090808
-        },
-        {
-          "index": 259,
-          "xy": [
-            9.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.0090808
-        },
-        {
-          "index": 260,
-          "xy": [
-            21.5,
-            7.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 261,
-          "xy": [
-            37.5,
-            11.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 262,
-          "xy": [
-            19.5,
-            31.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 263,
-          "xy": [
-            37.5,
-            5.5
-          ],
-          "yaw": 0.0,
-          "z": 0.01385359284183896
-        },
-        {
-          "index": 264,
-          "xy": [
-            3.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.0090808
-        },
-        {
-          "index": 265,
-          "xy": [
-            11.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080731713978184
-        },
-        {
-          "index": 266,
-          "xy": [
-            11.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 267,
-          "xy": [
-            37.5,
-            13.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 268,
-          "xy": [
-            37.5,
-            3.5
-          ],
-          "yaw": 0.0,
-          "z": 0.033185954768462804
-        },
-        {
-          "index": 269,
-          "xy": [
-            1.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.0090808
-        },
-        {
-          "index": 270,
-          "xy": [
-            13.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 271,
-          "xy": [
-            37.5,
-            15.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 272,
-          "xy": [
-            15.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080540000000002
-        },
-        {
-          "index": 273,
-          "xy": [
-            37.5,
-            17.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 274,
-          "xy": [
-            17.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 275,
-          "xy": [
-            37.5,
-            19.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 276,
-          "xy": [
-            19.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080540000000002
-        },
-        {
-          "index": 277,
-          "xy": [
-            21.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 278,
-          "xy": [
-            37.5,
-            21.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 279,
-          "xy": [
-            23.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 280,
-          "xy": [
-            37.5,
-            23.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 281,
-          "xy": [
-            25.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 282,
-          "xy": [
-            37.5,
-            25.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080539999999998
-        },
-        {
-          "index": 283,
-          "xy": [
-            37.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 284,
-          "xy": [
-            27.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 285,
-          "xy": [
-            37.5,
-            35.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 286,
-          "xy": [
-            37.5,
-            27.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 287,
-          "xy": [
-            35.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 288,
-          "xy": [
-            29.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 289,
-          "xy": [
-            37.5,
-            33.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 290,
-          "xy": [
-            37.5,
-            29.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080540000000002
-        },
-        {
-          "index": 291,
-          "xy": [
-            33.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.009080540000000002
-        },
-        {
-          "index": 292,
-          "xy": [
-            31.5,
-            37.5
-          ],
-          "yaw": 0.0,
-          "z": 0.00908054
-        },
-        {
-          "index": 293,
-          "xy": [
-            37.5,
-            31.5
+            12.0,
+            17.0
           ],
           "yaw": 0.0,
           "z": 0.00908054
@@ -3416,71 +657,147 @@
     },
     {
       "id": "tree_ring",
-      "prompt": "a mature oak tree",
+      "prompt": "a leafy tree",
       "size_m": [
-        4.0,
-        4.0,
-        10.0
+        6.0,
+        6.0,
+        8.0
       ],
       "count": 10,
       "layout": "surround",
-      "image_path": "/home/cmoore/workspace/env_gen/outputs/farm_000/images/tree_ring.png",
-      "mesh_path": "/home/cmoore/workspace/env_gen/outputs/farm_000/assets/tree_ring.glb",
-      "cache_key": "dd48173eb88db389507706d8b27646ace44958ffe74810075c9fccb1d7185e33",
+      "image_path": null,
+      "mesh_path": null,
+      "cache_key": null,
       "orient": "y_up",
-      "photo_url": null,
+      "photo_url": "https://thumbs.dreamstime.com/b/single-deciduous-tree-full-canopy-vibrant-green-leaves-stands-isolated-clean-white-background-solitary-rounded-bright-435424434.jpg",
       "seen_photo_urls": [
-        "https://thumbs.dreamstime.com/b/lush-green-deciduous-tree-full-canopy-leaves-isolated-white-background-foliage-perfectly-formed-healthy-stands-clean-418427105.jpg"
+        "https://thumbs.dreamstime.com/b/lush-green-deciduous-tree-isolated-transparent-background-full-healthy-thick-canopy-visible-trunk-stands-patch-415552425.jpg?w=768",
+        "https://thumbs.dreamstime.com/b/lush-green-deciduous-tree-full-foliage-sturdy-trunk-isolated-white-background-symbolizing-nature-growth-high-441780880.jpg",
+        "https://thumbs.dreamstime.com/b/lush-green-deciduous-tree-full-canopy-leaves-isolated-white-background-foliage-perfectly-formed-healthy-stands-clean-418427105.jpg",
+        "https://thumbs.dreamstime.com/b/solitary-showing-tall-deciduous-tree-lush-green-foliage-visible-root-system-isolated-white-background-keywords-434406669.jpg",
+        "https://thumbs.dreamstime.com/b/healthy-vibrant-green-deciduous-tree-stands-full-leaf-its-branches-reaching-outwards-isolated-clean-white-background-423281312.jpg",
+        "https://thumbs.dreamstime.com/z/isolated-deciduous-tree-white-background-32427538.jpg",
+        "https://thumbs.dreamstime.com/b/single-healthy-deciduous-tree-vibrant-green-foliage-stands-tall-isolated-clean-white-background-lush-green-deciduous-416997808.jpg",
+        "https://thumbs.dreamstime.com/b/single-deciduous-tree-full-canopy-vibrant-green-leaves-stands-isolated-clean-white-background-solitary-rounded-bright-435424434.jpg"
       ],
+      "accepted": [],
+      "mesh_image_sha": "",
       "field_m": null,
+      "field_origin": null,
+      "achieved_m": [
+        6.0,
+        5.999928294084378,
+        3.115699104215488
+      ],
+      "instances": []
+    },
+    {
+      "id": "bush_ring",
+      "prompt": "a rounded bush",
+      "size_m": [
+        1.9947381630099543,
+        2.0,
+        1.5022600041530774
+      ],
+      "count": 15,
+      "layout": "surround",
+      "image_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/images/bush_ring.png",
+      "mesh_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/assets/bush_ring.glb",
+      "cache_key": "9c34bf327ef913ac57a3197caae0f73d93b12003fe54fb6d9ac3fbac5c6f9c6b",
+      "orient": "y_up",
+      "photo_url": "https://c8.alamy.com/comp/D7KTWH/round-ornamental-bush-isolated-on-white-background-D7KTWH.jpg",
+      "seen_photo_urls": [
+        "https://img.freepik.com/premium-psd/bush-isolated-transparent-background_191095-58068.jpg?w=1800",
+        "https://thumbs.dreamstime.com/b/round-green-bush-isolated-transparent-background-well-trimmed-stands-alone-against-plain-white-has-dense-uniform-424711817.jpg",
+        "https://c8.alamy.com/comp/D7KTWH/round-ornamental-bush-isolated-on-white-background-D7KTWH.jpg"
+      ],
+      "accepted": [
+        "image",
+        "mesh"
+      ],
+      "mesh_image_sha": "",
+      "field_m": null,
+      "field_origin": null,
+      "achieved_m": [
+        1.9947381630099543,
+        2.0,
+        1.5022600041530774
+      ],
       "instances": [
         {
           "index": 0,
           "xy": [
-            70.07999999999998,
-            21.12
-          ],
-          "yaw": 0.0,
-          "z": 0.1440663
-        },
-        {
-          "index": 1,
-          "xy": [
-            -36.0,
-            21.12
-          ],
-          "yaw": 0.0,
-          "z": 0.14406697
-        },
-        {
-          "index": 2,
-          "xy": [
-            21.12,
-            -36.0
-          ],
-          "yaw": 0.0,
-          "z": 0.1440663
-        },
-        {
-          "index": 3,
-          "xy": [
-            21.12,
-            70.07999999999998
-          ],
-          "yaw": 0.0,
-          "z": 0.1440673
-        },
-        {
-          "index": 4,
-          "xy": [
-            -36.0,
-            -36.0
+            -37.6,
+            -12.400000000000006
           ],
           "yaw": 0.0,
           "z": 0.14406629999999998
         },
         {
+          "index": 1,
+          "xy": [
+            77.6,
+            52.400000000000006
+          ],
+          "yaw": 0.0,
+          "z": 0.14406630000000004
+        },
+        {
+          "index": 2,
+          "xy": [
+            77.6,
+            -12.400000000000006
+          ],
+          "yaw": 0.0,
+          "z": 0.14406630000000004
+        },
+        {
+          "index": 3,
+          "xy": [
+            -37.6,
+            52.400000000000006
+          ],
+          "yaw": 0.0,
+          "z": 0.15279890424092235
+        },
+        {
+          "index": 4,
+          "xy": [
+            -3.039999999999992,
+            65.36000000000001
+          ],
+          "yaw": 0.0,
+          "z": 0.14406747
+        },
+        {
           "index": 5,
+          "xy": [
+            43.03999999999999,
+            65.36000000000001
+          ],
+          "yaw": 0.0,
+          "z": 0.14406697
+        },
+        {
+          "index": 6,
+          "xy": [
+            -3.039999999999992,
+            -25.360000000000007
+          ],
+          "yaw": 0.0,
+          "z": 0.1440663
+        },
+        {
+          "index": 7,
+          "xy": [
+            43.03999999999999,
+            -25.360000000000007
+          ],
+          "yaw": 0.0,
+          "z": 0.1440663
+        },
+        {
+          "index": 8,
           "xy": [
             -27.84,
             70.07999999999998
@@ -3489,16 +806,16 @@
           "z": 0.1440673
         },
         {
-          "index": 6,
+          "index": 9,
           "xy": [
-            70.07999999999998,
-            -27.84
+            -36.0,
+            -36.0
           ],
           "yaw": 0.0,
-          "z": 0.1440663
+          "z": 0.14406629999999998
         },
         {
-          "index": 7,
+          "index": 10,
           "xy": [
             53.75999999999999,
             53.75999999999999
@@ -3507,19 +824,37 @@
           "z": 0.14406696999999996
         },
         {
-          "index": 8,
+          "index": 11,
           "xy": [
-            37.44,
-            -19.68
+            20.0,
+            -12.400000000000006
           ],
           "yaw": 0.0,
-          "z": 0.14406629999999998
+          "z": 0.14406630000000004
         },
         {
-          "index": 9,
+          "index": 12,
           "xy": [
-            -19.68,
-            37.44
+            -37.6,
+            20.0
+          ],
+          "yaw": 0.0,
+          "z": 0.18670847524208617
+        },
+        {
+          "index": 13,
+          "xy": [
+            77.6,
+            20.0
+          ],
+          "yaw": 0.0,
+          "z": 0.14406630000000004
+        },
+        {
+          "index": 14,
+          "xy": [
+            20.0,
+            52.400000000000006
           ],
           "yaw": 0.0,
           "z": 0.1440673
@@ -3527,161 +862,714 @@
       ]
     },
     {
-      "id": "bush_ring",
-      "prompt": "a dense evergreen bush",
+      "id": "trough_01",
+      "prompt": "a metal water trough",
       "size_m": [
         2.0,
-        2.0,
-        2.0
+        0.6,
+        0.6
       ],
-      "count": 15,
-      "layout": "surround",
-      "image_path": "/home/cmoore/workspace/env_gen/outputs/farm_000/images/bush_ring.png",
-      "mesh_path": "/home/cmoore/workspace/env_gen/outputs/farm_000/assets/bush_ring.glb",
-      "cache_key": "46e6ace000443caabb685c25a742cf9a11bb2ee4521a5cf1b0b1f768ecb2188e",
+      "count": 1,
+      "layout": "unique",
+      "image_path": null,
+      "mesh_path": null,
+      "cache_key": null,
       "orient": "y_up",
-      "photo_url": "https://img.freepik.com/premium-psd/bush-isolated-transparent-background_191095-58068.jpg?w=1800",
+      "photo_url": "http://watlingreclamation.co.uk/wp-content/uploads/2025/06/Reclaimed-Galvanised-Cattle-Trough-1-GFO-0244.jpg",
       "seen_photo_urls": [
-        "https://img.freepik.com/premium-psd/bush-isolated-transparent-background_191095-58068.jpg?w=1800"
+        "https://shire-agri.co.uk/cdn/shop/files/3ftwatertrough.png?v=1704897978",
+        "http://watlingreclamation.co.uk/wp-content/uploads/2025/06/Reclaimed-Galvanised-Cattle-Trough-1-GFO-0244.jpg"
       ],
+      "accepted": [],
+      "mesh_image_sha": "",
       "field_m": null,
+      "field_origin": null,
+      "achieved_m": [
+        1.9999999999999998,
+        0.5300053035965365,
+        0.3713001079007571
+      ],
+      "instances": []
+    },
+    {
+      "id": "crate_01",
+      "prompt": "a wooden crate",
+      "size_m": [
+        0.8,
+        0.6,
+        0.5
+      ],
+      "count": 1,
+      "layout": "unique",
+      "image_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/images/crate_01.png",
+      "mesh_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/assets/crate_01.glb",
+      "cache_key": "8c0ea99dbbe5d11da2d1fc40dcd928392e26886a07a0195fd1919a7b3a870799",
+      "orient": "y_up",
+      "photo_url": "https://thumbs.dreamstime.com/b/empty-rustic-wooden-crate-visible-wood-grain-isolated-white-background-403595033.jpg",
+      "seen_photo_urls": [
+        "https://thumbs.dreamstime.com/b/empty-rustic-wooden-crate-visible-wood-grain-isolated-white-background-403595033.jpg"
+      ],
+      "accepted": [
+        "image",
+        "mesh"
+      ],
+      "mesh_image_sha": "",
+      "field_m": null,
+      "field_origin": null,
+      "achieved_m": [
+        0.6004109582424997,
+        0.6,
+        0.4481897999570331
+      ],
       "instances": [
         {
           "index": 0,
           "xy": [
-            -36.0,
-            -3.3599999999999994
+            37.300205479121246,
+            37.3
           ],
           "yaw": 0.0,
-          "z": 0.14406697
+          "z": 0.00908054
+        }
+      ]
+    },
+    {
+      "id": "hay_01",
+      "prompt": "a hay bale",
+      "size_m": [
+        1.2,
+        0.6,
+        0.5
+      ],
+      "count": 6,
+      "layout": "rows",
+      "image_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/images/hay_01.png",
+      "mesh_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/assets/hay_01.glb",
+      "cache_key": "45170754321d261d309aeddeefcfcbeec55ccf5cb6d97368b5cc9d4406faacde",
+      "orient": "y_up",
+      "photo_url": "https://as1.ftcdn.net/v2/jpg/11/17/58/46/1000_F_1117584679_eaMTTgyMNdpt9U7BOcwmsscJLlqfQrFD.jpg",
+      "seen_photo_urls": [
+        "https://as1.ftcdn.net/v2/jpg/11/17/58/46/1000_F_1117584679_eaMTTgyMNdpt9U7BOcwmsscJLlqfQrFD.jpg"
+      ],
+      "accepted": [
+        "image",
+        "mesh"
+      ],
+      "mesh_image_sha": "",
+      "field_m": null,
+      "field_origin": null,
+      "achieved_m": [
+        0.5890378204454108,
+        0.6,
+        0.20545840998347953
+      ],
+      "instances": [
+        {
+          "index": 0,
+          "xy": [
+            1.2945189102227053,
+            19.3
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
         },
         {
           "index": 1,
           "xy": [
-            -3.3599999999999994,
-            -36.0
+            17.294518910222706,
+            37.3
           ],
           "yaw": 0.0,
-          "z": 0.1440663
+          "z": 0.00908054
         },
         {
           "index": 2,
           "xy": [
-            37.44,
-            61.91999999999999
+            27.294518910222706,
+            31.3
           ],
           "yaw": 0.0,
-          "z": 0.14406697
+          "z": 0.00908054
         },
         {
           "index": 3,
           "xy": [
-            61.91999999999999,
-            37.44
+            9.294518910222706,
+            27.3
           ],
           "yaw": 0.0,
-          "z": 0.14406696999999996
+          "z": 0.00908054
         },
         {
           "index": 4,
           "xy": [
-            61.91999999999999,
-            4.800000000000001
+            37.294518910222706,
+            25.3
           ],
           "yaw": 0.0,
-          "z": 0.1440663
+          "z": 0.00908054
         },
         {
           "index": 5,
           "xy": [
-            4.800000000000001,
-            61.91999999999999
+            19.294518910222706,
+            29.3
           ],
           "yaw": 0.0,
-          "z": 0.1440673
+          "z": 0.009080540000000002
+        }
+      ]
+    },
+    {
+      "id": "corn_01",
+      "prompt": "a corn stalk",
+      "size_m": [
+        0.6,
+        0.6,
+        1.8
+      ],
+      "count": 48,
+      "layout": "rows",
+      "image_path": null,
+      "mesh_path": null,
+      "cache_key": null,
+      "orient": "y_up",
+      "photo_url": null,
+      "seen_photo_urls": [
+        "https://static.vecteezy.com/system/resources/previews/054/197/619/large_2x/single-stalk-of-wheat-isolated-on-a-white-background-for-agricultural-and-culinary-purposes-on-transparent-background-png.png",
+        "https://static.vecteezy.com/system/resources/previews/075/712/090/non_2x/single-wheat-stalk-isolated-background-free-photo.jpg",
+        "https://thumbs.dreamstime.com/b/single-wheat-stalk-grains-plain-background-view-close-up-single-wheat-stalk-grains-showcasing-texture-386444131.jpg",
+        "https://thumbs.dreamstime.com/b/golden-wheat-stalk-isolated-pure-white-background-single-mature-showcasing-its-detailed-grains-delicate-awns-against-413249529.jpg",
+        "https://c8.alamy.com/comp/3BNJJHJ/single-wheat-ear-isolated-on-a-plain-blue-background-the-dried-golden-stalk-with-visible-grains-represents-agriculture-harvest-and-organic-farming-3BNJJHJ.jpg",
+        "https://thumbs.dreamstime.com/b/single-wheat-stalk-golden-grains-white-background-close-up-shot-ripe-its-clearly-visible-against-stark-backdrop-413366215.jpg",
+        "https://static.vecteezy.com/system/resources/previews/080/054/250/non_2x/single-stalk-of-wheat-isolated-png.png",
+        "https://thumbs.dreamstime.com/b/close-up-single-golden-wheat-stalk-isolated-clean-white-background-cereal-grain-agriculture-food-crop-represents-367479873.jpg?w=992"
+      ],
+      "accepted": [],
+      "mesh_image_sha": "",
+      "field_m": [
+        12.0,
+        16.0
+      ],
+      "field_origin": [
+        14.0,
+        2.0
+      ],
+      "achieved_m": [
+        0.2851624918927461,
+        0.27907400680329997,
+        1.8
+      ],
+      "instances": []
+    },
+    {
+      "id": "wheat_01",
+      "prompt": "a wheat plant",
+      "size_m": [
+        0.8,
+        0.8,
+        1.0
+      ],
+      "count": 48,
+      "layout": "rows",
+      "image_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/images/wheat_01.png",
+      "mesh_path": "/home/cmoore/workspace/farmgen/outputs/farm_000/assets/wheat_01.glb",
+      "cache_key": "284fc3bdd7ee64f06a7c458d294092109764963c4a1f0b3a76daa303ad0b08b5",
+      "orient": "y_up",
+      "photo_url": "https://img.freepik.com/premium-psd/wheat-isolated-transparent-background_1103335-322.jpg",
+      "seen_photo_urls": [
+        "https://img.freepik.com/premium-psd/wheat-isolated-transparent-background_1028290-15450.jpg",
+        "https://img.freepik.com/premium-psd/wheat-isolated-transparent-background_1089142-6266.jpg?w=2000",
+        "https://img.freepik.com/premium-psd/wheat-isolated-transparent-background_1103335-322.jpg"
+      ],
+      "accepted": [
+        "image",
+        "mesh"
+      ],
+      "mesh_image_sha": "",
+      "field_m": [
+        12.0,
+        16.0
+      ],
+      "field_origin": [
+        27.0,
+        2.0
+      ],
+      "achieved_m": [
+        0.8,
+        0.13170126089531375,
+        0.7958237543244339
+      ],
+      "instances": [
+        {
+          "index": 0,
+          "xy": [
+            28.0,
+            3.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 1,
+          "xy": [
+            30.0,
+            3.0
+          ],
+          "yaw": 0.0,
+          "z": 0.009080483210981817
+        },
+        {
+          "index": 2,
+          "xy": [
+            32.0,
+            3.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908025817345293
+        },
+        {
+          "index": 3,
+          "xy": [
+            34.0,
+            3.0
+          ],
+          "yaw": 0.0,
+          "z": 0.009080258173452928
+        },
+        {
+          "index": 4,
+          "xy": [
+            36.0,
+            3.0
+          ],
+          "yaw": 0.0,
+          "z": 0.009080258173452928
+        },
+        {
+          "index": 5,
+          "xy": [
+            38.0,
+            3.0
+          ],
+          "yaw": 0.0,
+          "z": 0.06276836073230528
         },
         {
           "index": 6,
           "xy": [
-            -11.52,
-            70.07999999999998
+            28.0,
+            5.0
           ],
           "yaw": 0.0,
-          "z": 0.14406747
+          "z": 0.00908054
         },
         {
           "index": 7,
           "xy": [
-            70.07999999999998,
-            -11.52
+            30.0,
+            5.0
           ],
           "yaw": 0.0,
-          "z": 0.1440663
+          "z": 0.00908054
         },
         {
           "index": 8,
           "xy": [
-            12.96,
-            -19.68
+            32.0,
+            5.0
           ],
           "yaw": 0.0,
-          "z": 0.14406629999999998
+          "z": 0.00908054
         },
         {
           "index": 9,
           "xy": [
-            -19.68,
-            12.96
+            34.0,
+            5.0
           ],
           "yaw": 0.0,
-          "z": 0.14406697
+          "z": 0.00908054
         },
         {
           "index": 10,
           "xy": [
-            53.75999999999999,
-            -27.84
+            36.0,
+            5.0
           ],
           "yaw": 0.0,
-          "z": 0.1440663
+          "z": 0.00908054
         },
         {
           "index": 11,
           "xy": [
-            -27.84,
-            53.75999999999999
+            38.0,
+            5.0
           ],
           "yaw": 0.0,
-          "z": 0.1440673
+          "z": 0.035669473245879366
         },
         {
           "index": 12,
           "xy": [
-            70.07999999999998,
-            53.75999999999999
+            28.0,
+            7.0
           ],
           "yaw": 0.0,
-          "z": 0.14406630000000004
+          "z": 0.00908054
         },
         {
           "index": 13,
           "xy": [
-            53.75999999999999,
-            70.07999999999998
+            30.0,
+            7.0
           ],
           "yaw": 0.0,
-          "z": 0.14406697
+          "z": 0.00908054
         },
         {
           "index": 14,
           "xy": [
-            -27.84,
-            -11.52
+            32.0,
+            7.0
           ],
           "yaw": 0.0,
-          "z": 0.1440663
+          "z": 0.00908054
+        },
+        {
+          "index": 15,
+          "xy": [
+            34.0,
+            7.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 16,
+          "xy": [
+            36.0,
+            7.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 17,
+          "xy": [
+            38.0,
+            7.0
+          ],
+          "yaw": 0.0,
+          "z": 0.019453663893915053
+        },
+        {
+          "index": 18,
+          "xy": [
+            28.0,
+            9.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 19,
+          "xy": [
+            30.0,
+            9.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 20,
+          "xy": [
+            32.0,
+            9.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 21,
+          "xy": [
+            34.0,
+            9.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 22,
+          "xy": [
+            36.0,
+            9.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 23,
+          "xy": [
+            38.0,
+            9.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 24,
+          "xy": [
+            28.0,
+            11.0
+          ],
+          "yaw": 0.0,
+          "z": 0.009080539999999998
+        },
+        {
+          "index": 25,
+          "xy": [
+            30.0,
+            11.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 26,
+          "xy": [
+            32.0,
+            11.0
+          ],
+          "yaw": 0.0,
+          "z": 0.009080539999999998
+        },
+        {
+          "index": 27,
+          "xy": [
+            34.0,
+            11.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 28,
+          "xy": [
+            36.0,
+            11.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 29,
+          "xy": [
+            38.0,
+            11.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 30,
+          "xy": [
+            28.0,
+            13.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 31,
+          "xy": [
+            30.0,
+            13.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 32,
+          "xy": [
+            32.0,
+            13.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 33,
+          "xy": [
+            34.0,
+            13.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 34,
+          "xy": [
+            36.0,
+            13.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 35,
+          "xy": [
+            38.0,
+            13.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 36,
+          "xy": [
+            28.0,
+            15.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 37,
+          "xy": [
+            30.0,
+            15.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 38,
+          "xy": [
+            32.0,
+            15.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 39,
+          "xy": [
+            34.0,
+            15.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 40,
+          "xy": [
+            36.0,
+            15.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 41,
+          "xy": [
+            38.0,
+            15.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 42,
+          "xy": [
+            28.0,
+            17.0
+          ],
+          "yaw": 0.0,
+          "z": 0.009080540000000002
+        },
+        {
+          "index": 43,
+          "xy": [
+            30.0,
+            17.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 44,
+          "xy": [
+            32.0,
+            17.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 45,
+          "xy": [
+            34.0,
+            17.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 46,
+          "xy": [
+            36.0,
+            17.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
+        },
+        {
+          "index": 47,
+          "xy": [
+            38.0,
+            17.0
+          ],
+          "yaw": 0.0,
+          "z": 0.00908054
         }
       ]
+    },
+    {
+      "id": "tree_pine",
+      "prompt": "a pine tree",
+      "size_m": [
+        6.0,
+        6.0,
+        8.0
+      ],
+      "count": 8,
+      "layout": "surround",
+      "image_path": null,
+      "mesh_path": null,
+      "cache_key": null,
+      "orient": "y_up",
+      "photo_url": "https://thumbs.dreamstime.com/b/single-deciduous-tree-full-canopy-vibrant-green-leaves-stands-isolated-clean-white-background-solitary-rounded-bright-435424434.jpg",
+      "seen_photo_urls": [
+        "https://thumbs.dreamstime.com/b/lush-green-deciduous-tree-isolated-transparent-background-full-healthy-thick-canopy-visible-trunk-stands-patch-415552425.jpg?w=768",
+        "https://thumbs.dreamstime.com/b/lush-green-deciduous-tree-full-foliage-sturdy-trunk-isolated-white-background-symbolizing-nature-growth-high-441780880.jpg",
+        "https://thumbs.dreamstime.com/b/lush-green-deciduous-tree-full-canopy-leaves-isolated-white-background-foliage-perfectly-formed-healthy-stands-clean-418427105.jpg",
+        "https://thumbs.dreamstime.com/b/solitary-showing-tall-deciduous-tree-lush-green-foliage-visible-root-system-isolated-white-background-keywords-434406669.jpg",
+        "https://thumbs.dreamstime.com/b/healthy-vibrant-green-deciduous-tree-stands-full-leaf-its-branches-reaching-outwards-isolated-clean-white-background-423281312.jpg",
+        "https://thumbs.dreamstime.com/z/isolated-deciduous-tree-white-background-32427538.jpg",
+        "https://thumbs.dreamstime.com/b/single-healthy-deciduous-tree-vibrant-green-foliage-stands-tall-isolated-clean-white-background-lush-green-deciduous-416997808.jpg",
+        "https://thumbs.dreamstime.com/b/single-deciduous-tree-full-canopy-vibrant-green-leaves-stands-isolated-clean-white-background-solitary-rounded-bright-435424434.jpg"
+      ],
+      "accepted": [],
+      "mesh_image_sha": "",
+      "field_m": null,
+      "field_origin": null,
+      "achieved_m": [
+        6.0,
+        5.999925611651933,
+        3.1157749134952324
+      ],
+      "instances": []
     }
   ]
 }

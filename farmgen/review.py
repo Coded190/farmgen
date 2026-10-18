@@ -36,6 +36,9 @@ def stage_images(stage: str, scene: Scene, reference: Path | None = None) -> tup
             if path.is_file():
                 ids.append(asset.id)
                 images.append(path)
+                photo = Path(asset.image_path) if asset.image_path else None
+                if photo is not None and photo.is_file():
+                    images.append(photo)
         return ids, images
     if stage == "scale":
         ids = [asset.id for asset in scene.assets]
@@ -51,10 +54,13 @@ def stage_images(stage: str, scene: Scene, reference: Path | None = None) -> tup
         ids = [asset.id for asset in scene.assets]
         return ids, [path] if path.is_file() else []
     if stage == "scene":
-        images = [out / compose_view_filename(index) for index in range(4)]
-        missing = [path for path in images if not path.is_file()]
+        images = [out / "compose_top.png"]
+        images.extend(out / compose_view_filename(index) for index in range(4))
+        missing = [path for path in images[1:] if not path.is_file()]
         if missing:
             raise RuntimeError(f"scene views missing: {missing[0].name}")
+        if not images[0].is_file():
+            images = images[1:]
         for asset in scene.assets:
             for yaw in ASSET_YAWS:
                 thumb = out / "thumbs" / asset_view_filename(asset.id, yaw)

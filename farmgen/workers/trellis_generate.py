@@ -11,10 +11,98 @@ import argparse
 import json
 import os
 import time
+from pathlib import Path
 
 os.environ.setdefault("OPENCV_IO_ENABLE_OPENEXR", "1")
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 os.environ.setdefault("ATTN_BACKEND", "flash_attn")
+# Weights are already on disk. An unauthenticated Hub check prints a warning
+# once per asset and does not download anything.
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+
+# Free bytes on the visible GPU, from torch.cuda.mem_get_info. This is the
+# same 4096 MiB headroom the scheduler uses before it starts a job. Host RAM
+# is not part of the check.
+FILL_FREE_MIN_MIB = 4096
+
+
+def fill_device(free_mib: int, need_mib: int = FILL_FREE_MIN_MIB) -> str:
+    """Return ``gpu`` when free GPU memory is at least ``need_mib``, else ``cpu``."""
+    return "gpu" if int(free_mib) >= int(need_mib) else "cpu"
+
+
+def _gpu_mib(torch_module) -> tuple[int, int, int]:
+    free, total = torch_module.cuda.mem_get_info()
+    allocated = torch_module.cuda.memory_allocated()
+    return int(free // 1048576), int(total // 1048576), int(allocated // 1048576)
+
+
+def install_fill_guard(cumesh_module, torch_module) -> dict:
+    """Try CuMesh hole fill when the GPU has free memory. On a miss, leave the mesh open.
+
+    The parent process fan-fills pinholes only when this report says ``cpu``.
+    ``gpu_free_mib``, ``gpu_total_mib``, and ``gpu_allocated_mib`` are CUDA
+    figures for the visible card. On ``reason=cuda_oom`` they are the figures
+    at the out-of-memory error, before the cache is emptied.
+    """
+    report = {
+        "fill": "gpu",
+        "reason": "ok",
+        "gpu_free_mib": None,
+        "gpu_total_mib": None,
+        "gpu_allocated_mib": None,
+        "need_mib": FILL_FREE_MIN_MIB,
+        "memory": "gpu",
+    }
+    original = cumesh_module.CuMesh.fill_holes
+    oom_type = getattr(torch_module.cuda, "OutOfMemoryError", torch_module.OutOfMemoryError)
+
+    def _remember(reason: str, free: int, total: int, allocated: int) -> None:
+        report["fill"] = "cpu"
+        report["reason"] = reason
+        report["gpu_free_mib"] = free
+        report["gpu_total_mib"] = total
+        report["gpu_allocated_mib"] = allocated
+        print(
+            "FARMGEN stage=asset fill_holes=cpu"
+            f" reason={reason} memory=gpu gpu_free_mib={free} gpu_total_mib={total}"
+            f" gpu_allocated_mib={allocated} need_mib={FILL_FREE_MIN_MIB}",
+            flush=True,
+        )
+
+    def _guarded(self, max_hole_perimeter=3e-2):
+        free, total, allocated = _gpu_mib(torch_module)
+        if fill_device(free, FILL_FREE_MIN_MIB) == "cpu":
+            _remember("low_free", free, total, allocated)
+            return None
+        try:
+            filled = original(self, max_hole_perimeter)
+        except oom_type:
+            free, total, allocated = _gpu_mib(torch_module)
+            _remember("cuda_oom", free, total, allocated)
+            torch_module.cuda.empty_cache()
+            return None
+        except RuntimeError as exc:
+            if "out of memory" not in str(exc).lower():
+                raise
+            free, total, allocated = _gpu_mib(torch_module)
+            _remember("cuda_oom", free, total, allocated)
+            torch_module.cuda.empty_cache()
+            return None
+        if report["fill"] == "gpu" and report["gpu_free_mib"] is None:
+            report["gpu_free_mib"] = free
+            report["gpu_total_mib"] = total
+            report["gpu_allocated_mib"] = allocated
+            print(
+                "FARMGEN stage=asset fill_holes=gpu memory=gpu"
+                f" gpu_free_mib={free} gpu_total_mib={total} gpu_allocated_mib={allocated}"
+                f" need_mib={FILL_FREE_MIN_MIB}",
+                flush=True,
+            )
+        return filled
+
+    cumesh_module.CuMesh.fill_holes = _guarded
+    return report
 
 
 def main() -> None:
@@ -36,6 +124,9 @@ def main() -> None:
     birefnet_module = importlib.import_module("trellis2.pipelines.rembg.BiRefNet")
     from trellis2.pipelines import Trellis2ImageTo3DPipeline
     import o_voxel
+    import cumesh
+
+    fill_report = install_fill_guard(cumesh, torch)
 
     # facebook/dinov3-vitl16-pretrain-lvd1689m is a gated repo. This public
     # copy is the same DINOv3ViTModel (hidden size 1024) and does not need a token.
@@ -83,21 +174,6 @@ def main() -> None:
 
     birefnet_module.BiRefNet.__init__ = _public_rmbg
 
-    import trellis2.representations.mesh.base as mesh_base
-
-    original_fill = mesh_base.Mesh.fill_holes
-
-    def _fill_holes(self, max_hole_perimeter=3e-2):
-        # CuMesh fill_holes OOMs on dense meshes and leaves the CUDA context
-        # unusable for the rest of decode. Skipping it keeps the decoded mesh.
-        del max_hole_perimeter
-        _ = original_fill
-        count = int(self.vertices.shape[0])
-        print(f"FARMGEN stage=asset fill_holes=skipped vertices={count} reason=avoid_cuda_oom", flush=True)
-        return None
-
-    mesh_base.Mesh.fill_holes = _fill_holes
-
     started = time.perf_counter()
     pipeline = Trellis2ImageTo3DPipeline.from_pretrained("microsoft/TRELLIS.2-4B")
     pipeline.cuda()
@@ -120,6 +196,8 @@ def main() -> None:
         verbose=True,
     )
     glb.export(args.output)
+    marker = {key: value for key, value in fill_report.items() if key != "logged"}
+    Path(str(args.output) + ".fill.json").write_text(json.dumps(marker), encoding="utf-8")
     elapsed = time.perf_counter() - started
     del pipeline
     torch.cuda.empty_cache()

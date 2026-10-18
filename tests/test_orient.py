@@ -24,7 +24,8 @@ def test_y_up_box_stands_on_z_after_scale():
     scaled = scale_vertices_to_size(upright, (2.0, 3.0, 5.0))
     assert scaled[:, 2].min() == 0.0
     scaled_extents = scaled.max(axis=0) - scaled.min(axis=0)
-    np.testing.assert_allclose(scaled_extents, [2.0, 3.0, 5.0])
+    # Upright span is 1 x 0.5 x 4. The height target 5 gives factor 1.25.
+    np.testing.assert_allclose(scaled_extents, [1.25, 0.625, 5.0])
 
 
 def test_candidates_are_proper_and_cover_each_source_axis():

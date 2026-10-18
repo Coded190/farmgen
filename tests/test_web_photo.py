@@ -74,6 +74,45 @@ def test_a_run_records_the_live_image_path(tmp_path, monkeypatch):
     assert not (run_dir / "images").exists()
 
 
+def test_a_stage_record_keeps_the_png_and_the_verdict(tmp_path, monkeypatch):
+    import json
+
+    from farmgen.archive import record_stage
+    from farmgen.scene import AssetSpec, GroundSpec, Scene
+
+    monkeypatch.setattr("farmgen.archive.output_dir", lambda _scene_id: tmp_path)
+    monkeypatch.setattr("farmgen.archive.log_line", lambda *_args, **_kwargs: "")
+    picture = tmp_path / "compose_top.png"
+    picture.write_bytes(b"png")
+    (tmp_path / "farmgen.log").write_text(
+        "FARMGEN scene=farm_test seed=0 stage=asset note=uniform factor=2.0000\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "verdict.json").write_text(
+        json.dumps({"entries": [{"id": "barn_01", "label": "ok", "score": 9, "action": None}]}),
+        encoding="utf-8",
+    )
+    scene = Scene(
+        id="farm_test",
+        seed=0,
+        brief="a barn",
+        ground=GroundSpec(size_m=(40.0, 40.0)),
+        assets=[AssetSpec(id="barn_01", prompt="a wooden barn", size_m=(8.0, 6.0, 5.0), count=1)],
+    )
+    run_dir = tmp_path / "runs" / "0009"
+    record_stage(run_dir, "scene", scene, [picture], log_from=0, include_verdict=True)
+    folder = run_dir / "stages" / "scene"
+    recorded = json.loads((folder / "input.json").read_text())
+    assert recorded["brief"] == "a barn"
+    assert recorded["assets"][0]["id"] == "barn_01"
+    assert recorded["assets"][0]["size_m"] == [8.0, 6.0, 5.0]
+    output = json.loads((folder / "output.json").read_text())
+    assert output["verdict"] == [{"id": "barn_01", "label": "ok", "score": 9, "action": None}]
+    assert output["metrics"][0]["factor"] == "2.0000"
+    assert (folder / "images" / "compose_top.png").read_bytes() == b"png"
+    assert json.loads((folder / "scene.json").read_text())["assets"][0]["id"] == "barn_01"
+
+
 def test_the_first_returned_url_is_tried_before_the_second(tmp_path):
     urls = ["http://example.test/a.jpg", "http://example.test/b.jpg"]
     assert ordered_urls(urls, seed=3, asset_id="tree_01", exclude=(urls[0],)) == [urls[1]]
@@ -309,7 +348,7 @@ def test_flux_is_used_only_after_the_photo_tries_fail(tmp_path, monkeypatch):
     assert (tmp_path / "photo_gate" / "barn_01_attempt_1.json").is_file()
 
 
-def test_a_flat_card_retries_with_flux(tmp_path, monkeypatch):
+def test_a_flat_card_is_kept_for_review(tmp_path, monkeypatch):
     from pathlib import Path
     from types import SimpleNamespace
 
@@ -374,13 +413,15 @@ def test_a_flat_card_retries_with_flux(tmp_path, monkeypatch):
     monkeypatch.setattr("farmgen.run.trellis_dir", lambda: tmp_path / "trellis")
     monkeypatch.setattr("farmgen.run.repo_root", lambda: tmp_path)
     monkeypatch.setattr("farmgen.run._wait_gpu", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("farmgen.run._wait_trellis_devices", lambda *_args, **_kwargs: [0])
+    monkeypatch.setattr("farmgen.workers.vlm_critic.stop_server", lambda: None)
     monkeypatch.setattr("farmgen.run.gpu_memory_mib", lambda: 0)
     monkeypatch.setattr("farmgen.run.cache_path", lambda key: tmp_path / "cache" / f"{key}.glb")
     monkeypatch.setattr("farmgen.run.subprocess.run", fake_run)
     monkeypatch.setattr("farmgen.run._generate_images", fake_flux)
     _generate_meshes(scene, scene.assets)
-    assert calls == {"trellis": 2, "flux": 1}
-    assert scene.asset("tree_01").photo_url is None
+    assert calls == {"trellis": 1, "flux": 0}
+    assert scene.asset("tree_01").photo_url == "http://example.test/tree.jpg"
     kept = list((tmp_path / "cache").glob("*.glb"))
     assert len(kept) == 1
     assert not list((tmp_path / "cache").glob("*.raw.glb"))
@@ -433,6 +474,8 @@ def test_an_empty_foreground_retries_with_flux(tmp_path, monkeypatch):
     monkeypatch.setattr("farmgen.run.trellis_dir", lambda: tmp_path / "trellis")
     monkeypatch.setattr("farmgen.run.repo_root", lambda: tmp_path)
     monkeypatch.setattr("farmgen.run._wait_gpu", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("farmgen.run._wait_trellis_devices", lambda *_args, **_kwargs: [0])
+    monkeypatch.setattr("farmgen.workers.vlm_critic.stop_server", lambda: None)
     monkeypatch.setattr("farmgen.run.gpu_memory_mib", lambda: 0)
     monkeypatch.setattr("farmgen.run.cache_path", lambda key: tmp_path / "cache" / f"{key}.glb")
     monkeypatch.setattr("farmgen.run.subprocess.run", fake_run)
@@ -488,7 +531,7 @@ def test_a_field_photo_becomes_one_crop_and_many_copies(tmp_path, monkeypatch):
         return (0.25, 0.25, 0.5, 0.5)
 
     def judge(*_args):
-        raise AssertionError("a field photo is cropped, not dropped")
+        return True
 
     run_images(
         scene,

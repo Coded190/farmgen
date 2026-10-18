@@ -215,3 +215,163 @@ def test_a_yard_hole_is_the_open_cell_not_the_southwest_corner():
     tractor = scene.asset("tractor_01").instances[0].xy
     assert math.hypot(tractor[0] - silo[0], tractor[1] - silo[1]) > 10.0
 
+
+def test_a_grid_fills_the_yard_and_a_full_lattice_logs_once(monkeypatch):
+    from farmgen.poses import place_grids, seat_visible
+    from farmgen.scene import AssetSpec, GroundSpec, Instance, Scene
+
+    scene = Scene(
+        id="grid_test",
+        seed=1,
+        brief="pasture",
+        ground=GroundSpec(size_m=(4.0, 4.0), terrain_m=(12.0, 12.0)),
+        assets=[
+            AssetSpec(
+                id="pasture_crop",
+                prompt="a green pasture plant",
+                size_m=(1.0, 1.0, 0.5),
+                count=20,
+                layout="grid",
+            )
+        ],
+    )
+    place_grids(scene, {"pasture_crop"})
+    assert len(scene.asset("pasture_crop").instances) == 16
+
+    blocked = Scene(
+        id="grid_test",
+        seed=1,
+        brief="yard",
+        ground=GroundSpec(size_m=(4.0, 4.0), terrain_m=(12.0, 12.0)),
+        assets=[
+            AssetSpec(
+                id="barn_01",
+                prompt="a wooden barn",
+                size_m=(4.0, 4.0, 4.0),
+                count=1,
+                layout="unique",
+                instances=[Instance(index=0, xy=(2.0, 2.0), yaw=0.0)],
+            ),
+            AssetSpec(
+                id="plant",
+                prompt="a plant",
+                size_m=(1.0, 1.0, 1.0),
+                count=5,
+                layout="rows",
+            ),
+        ],
+    )
+    notes = []
+
+    def capture(_scene_id, _seed, _stage, **fields):
+        notes.append(fields)
+
+    monkeypatch.setattr("farmgen.poses.log_line", capture)
+    seat_visible(blocked, {"plant"})
+    unplaced = [item for item in notes if item.get("note") == "unplaced"]
+    assert unplaced == [{"id": "plant", "note": "unplaced", "count": 5}]
+    assert blocked.asset("plant").instances == []
+
+
+def test_crops_sit_in_the_south_and_clear_the_barn():
+    from farmgen.placer import Footprint, footprint_issue
+    from farmgen.poses import place_fields
+    from farmgen.scene import AssetSpec, GroundSpec, Instance, Scene
+
+    barn = AssetSpec(
+        id="barn_01",
+        prompt="a wooden barn",
+        size_m=(6.0, 6.0, 7.0),
+        count=1,
+        layout="unique",
+        instances=[Instance(index=0, xy=(20.0, 30.0), yaw=0.0)],
+    )
+    scene = Scene(
+        id="farm_test",
+        seed=0,
+        brief="crops",
+        ground=GroundSpec(size_m=(40.0, 40.0)),
+        assets=[
+            barn,
+            AssetSpec(
+                id="pasture_crop",
+                prompt="a green pasture plant",
+                size_m=(0.7, 0.6, 0.5),
+                count=1,
+                layout="rows",
+                field_m=(12.0, 16.0),
+                field_origin=(1.0, 2.0),
+            ),
+            AssetSpec(
+                id="corn_01",
+                prompt="a corn stalk",
+                size_m=(0.6, 0.6, 1.8),
+                count=1,
+                layout="rows",
+                field_m=(12.0, 16.0),
+                field_origin=(14.0, 2.0),
+            ),
+            AssetSpec(
+                id="wheat_01",
+                prompt="a wheat plant",
+                size_m=(0.8, 0.8, 1.0),
+                count=1,
+                layout="rows",
+                field_m=(12.0, 16.0),
+                field_origin=(27.0, 2.0),
+            ),
+        ],
+    )
+    place_fields(scene)
+    occupied = [Footprint("barn_01", 0, barn.instances[0].xy, 0.0, barn.size_m[:2])]
+    xs = []
+    for asset in scene.assets[1:]:
+        assert asset.instances
+        assert all(inst.xy[1] < 18.0 for inst in asset.instances)
+        xs.append(sum(inst.xy[0] for inst in asset.instances) / len(asset.instances))
+        for inst in asset.instances:
+            assert (
+                footprint_issue(inst.xy, 0.0, asset.size_m[:2], "rows", scene.ground.plot_m, scene.ground.terrain_m, occupied)
+                is None
+            )
+    assert xs[0] < xs[1] < xs[2]
+
+
+def test_a_pose_inside_the_crop_band_is_rejected():
+    from farmgen.poses import apply_proposals, seat_visible
+    from farmgen.scene import AssetSpec, GroundSpec, Scene
+    from farmgen.views import uv_to_plot_xy
+
+    scene = Scene(
+        id="farm_test",
+        seed=0,
+        brief="yard",
+        ground=GroundSpec(size_m=(40.0, 40.0), terrain_m=(120.0, 120.0)),
+        assets=[
+            AssetSpec(
+                id="pasture_crop",
+                prompt="a green pasture plant",
+                size_m=(1.0, 1.0, 0.5),
+                count=1,
+                layout="rows",
+                field_m=(12.0, 16.0),
+                field_origin=(1.0, 2.0),
+            ),
+            AssetSpec(id="barn_01", prompt="a wooden barn", size_m=(4.0, 4.0, 6.0), count=1, layout="unique"),
+        ],
+    )
+    south = None
+    for step in range(21):
+        v = step / 20.0
+        xy = uv_to_plot_xy(0.5, v, scene.ground.terrain_m, scene.ground.plot_m)
+        if 2.0 < xy[1] < 16.0 and 2.0 < xy[0] < 38.0:
+            south = (0.5, v)
+            break
+    assert south is not None
+    problems: list = []
+    apply_proposals(scene, [{"id": "barn_01", "index": 0, "u": south[0], "v": south[1], "yaw_deg": 0}], problems)
+    assert scene.asset("barn_01").instances == []
+    assert problems[0][2] == "inside the crop band"
+    seat_visible(scene, {"barn_01"})
+    assert scene.asset("barn_01").instances[0].xy[1] >= 18.0
+

@@ -15,9 +15,15 @@ from farmgen.paths import repo_root
 def load_workflow(prompt: str, seed: int) -> dict:
     path = repo_root() / "configs" / "flux_schnell_api.json"
     workflow = json.loads(path.read_text(encoding="utf-8"))
+    named = prompt.strip()
+    if named.lower().startswith("a "):
+        named = named[2:]
+    elif named.lower().startswith("an "):
+        named = named[3:]
     text = (
-        f"a single {prompt}, centered, entire object visible, "
-        "plain light gray background, studio product photo, no text"
+        f"a single {named}, centered, fully visible, three-quarter view, "
+        "soft even studio lighting, no harsh shadows, "
+        "plain light gray background, no other objects, no text"
     )
     workflow["6"]["inputs"]["text"] = text
     workflow["16"]["inputs"]["seed"] = int(seed)

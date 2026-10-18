@@ -32,7 +32,7 @@ def test_retry_cap_and_unknown_object():
     assert still == 0.0
 
 
-def test_low_score_does_not_schedule_and_reorient_shares_the_cap():
+def test_a_low_score_still_schedules_a_failed_label_and_reorient_shares_the_cap():
     scene = starter_scene()
     quiet = Verdict(
         entries=[
@@ -44,7 +44,7 @@ def test_low_score_does_not_schedule_and_reorient_shares_the_cap():
         retry_counts={"barn_01": 2},
     )
     actions, ignored = plan_redos(scene, quiet)
-    assert [action.id for action in actions] == ["silo_01", "place"]
+    assert [action.id for action in actions] == ["tractor_01", "silo_01", "place"]
     assert any("retry cap id=barn_01" in item for item in ignored)
 
     shared = Verdict(
@@ -66,7 +66,7 @@ def test_wrong_place_is_kept_when_the_score_is_acceptable():
     )
     actions, ignored = plan_redos(scene, verdict)
     assert ignored == []
-    assert [(action.id, action.action) for action in actions] == [("barn_01", "move")]
+    assert [(action.id, action.action) for action in actions] == [("barn_01", "move"), ("tractor_01", "turn")]
 
 
 def test_move_keeps_a_point_inside_the_yard_and_drops_one_outside():
@@ -92,7 +92,7 @@ def test_move_keeps_a_point_inside_the_yard_and_drops_one_outside():
     assert any("outside" in item for item in notes)
 
 
-def test_wrong_yaw_schedules_a_turn_only_above_the_score_limit():
+def test_wrong_yaw_schedules_a_turn_at_a_low_score_too():
     scene = starter_scene()
     loud = Verdict(
         entries=[
@@ -109,5 +109,6 @@ def test_wrong_yaw_schedules_a_turn_only_above_the_score_limit():
             VerdictEntry(id="barn_01", label="wrong_yaw", action="turn", score=4, yaw_deg=90),
         ]
     )
-    none, _notes = plan_redos(scene, quiet)
-    assert none == []
+    quiet_actions, quiet_notes = plan_redos(scene, quiet)
+    assert quiet_notes == []
+    assert [(action.action, action.yaw_deg) for action in quiet_actions] == [("turn", 90)]

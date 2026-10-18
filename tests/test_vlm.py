@@ -3,6 +3,7 @@
 from farmgen.critic import SCORE_OK_MAX
 from farmgen.scene import starter_scene
 from farmgen.workers.vlm_critic import (
+    catalog_gate_payload,
     catalog_payload,
     mesh_gate_payload,
     parse_catalog,
@@ -108,7 +109,8 @@ def test_mesh_and_placement_prompts_stay_on_separate_jobs(tmp_path):
     from PIL import Image
 
     mesh = mesh_gate_payload("silo_01", "a metal silo", [])["messages"][0]["content"][0]["text"]
-    assert "orthogonal" in mesh
+    assert "thinnest view" in mesh
+    assert "edge-on sheet" in mesh
     place = verdict_payload("place", ["barn_01", "trees_bushes_ring_01"], [])["messages"][0]["content"][0]["text"]
     assert "placement only" in place
     assert "action is null or move" in place
@@ -117,6 +119,24 @@ def test_mesh_and_placement_prompts_stay_on_separate_jobs(tmp_path):
     poses = poses_payload(["barn_01", "tree_01"], image)["messages"][0]["content"][0]["text"]
     assert "own point" in poses
     assert "green ring" in poses
+
+
+def test_catalog_gate_accepts_or_rejects_without_rewriting():
+    scene = starter_scene()
+    text = catalog_gate_payload(scene.brief, scene.assets[:2])["messages"][0]["content"]
+    assert scene.brief in text
+    assert "Do not rewrite" in text
+    assert "absent after normalization" in catalog_gate_payload(scene.brief, scene.assets[:1])["messages"][0]["content"]
+    assert "barn_01" in text
+    assert "accept" in text
+    body = {
+        "choices": [
+            {"message": {"content": '{"id":"catalog","accept":false,"reason":"The list has no fence."}'}}
+        ]
+    }
+    decision = parse_mesh_gate(body, "catalog")
+    assert decision.accept is False
+    assert decision.reason == "The list has no fence."
 
 
 def test_scene_prompt_names_every_catalog_id():

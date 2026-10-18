@@ -1,8 +1,8 @@
 """Critic verdicts and the redo actions they schedule.
 
 ``farmgen critique --verdict`` still applies a file a person wrote. The local
-Qwen client writes the same file. A score at or below 4 schedules nothing.
-Contact holes and overlap stay outside this module.
+Qwen client writes the same file. A label other than ok schedules its action.
+Score is stored severity from 0 to 10 and does not hide that label.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ LABELS = frozenset(
 )
 ACTIONS = frozenset({"redo_ground", "redo_asset", "reorient", "redo_image", "redo_place", "turn", "move"})
 YAW_DEGREES = frozenset({0, 90, 180, 270})
-# A judge score at or below this value is stored and does not schedule a redo.
+# Stored severity. A label other than ok still schedules its action at or below this score.
 SCORE_OK_MAX = 4
 MAX_RETRIES = 2
 _CATALOG_ACTIONS = frozenset({"redo_asset", "reorient", "redo_image", "turn"})
@@ -82,6 +82,7 @@ class VerdictEntry(BaseModel):
 class Verdict(BaseModel):
     entries: list[VerdictEntry]
     retry_counts: dict[str, int] = Field(default_factory=dict)
+    reply: str = ""
 
 
 class RedoAction(BaseModel):
@@ -115,8 +116,6 @@ def plan_redos(scene: Scene, verdict: Verdict) -> tuple[list[RedoAction], list[s
     accepted: list[RedoAction] = []
     ignored: list[str] = []
     for entry in verdict.entries:
-        if entry.score is not None and entry.score <= SCORE_OK_MAX and entry.label != "wrong_place":
-            continue
         if entry.label == "ok" or entry.action is None:
             continue
         target = "ground" if entry.action == "redo_ground" else entry.id

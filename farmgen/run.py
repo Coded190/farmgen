@@ -1,4 +1,8 @@
-"""Orchestrate Infinigen, ComfyUI, and TRELLIS.2. Each GPU model runs alone."""
+"""Orchestrate Infinigen, ComfyUI, and TRELLIS.2.
+
+Flux and TRELLIS share one card. Qwen stays on another card when a second
+card is free, and on the same card, one job at a time, when it is not.
+"""
 
 from __future__ import annotations
 
@@ -12,10 +16,18 @@ from pathlib import Path
 import numpy as np
 import trimesh
 
+from farmgen.accept import (
+    clear_accepted,
+    image_ok,
+    mark_accepted,
+    mesh_ok,
+    note_mesh_rejected,
+    same_rejected_image,
+)
 from farmgen.cache import cache_hit, cache_key, cache_path, file_sha256
 from farmgen.compose import export_scene
 from farmgen.contact import HOLE_FRACTION_LIMIT, seal_contact_floor
-from farmgen.gpu import IMAGE_BUDGET_MIB, TRELLIS_BUDGET_MIB, gpu_memory_mib, wait_for_vram
+from farmgen.gpu import IMAGE_BUDGET_MIB, TRELLIS_BUDGET_MIB, gpu_memory_mib
 from farmgen.ground import (
     inspect_ground,
     load_ground,
@@ -29,12 +41,11 @@ from farmgen.ground import (
 )
 from farmgen.image import free_memory, queue_image
 from farmgen.log import log_line
-from farmgen.mesh_gate import flat_card_reason
 from farmgen.orient import apply_rotation, next_rotation
 from farmgen.paths import comfy_dir, infinigen_dir, output_dir, repo_root, trellis_dir
 from farmgen.placer import place_scene
-from farmgen.scale import bbox_size, relative_size_error, scale_vertices_to_size, size_error_ok
-from farmgen.scene import Scene, save_scene
+from farmgen.scale import bbox_size, kept_faces, relative_size_error, scale_detail, size_error_ok
+from farmgen.scene import Scene, load_scene, save_scene
 
 COMFY_URL = "http://127.0.0.1:8188"
 COPY_FACE_CAP = 16_000
@@ -100,6 +111,40 @@ def _selected(scene: Scene, only: list[str] | None):
     return [asset for asset in scene.assets if only is None or asset.id in only]
 
 
+def retire_photo(scene: Scene, asset, reason: str = "sheet_photo") -> None:
+    """Drop a photo whose mesh failed the gate so the next fetch uses a different URL."""
+    from farmgen.accept import clear_accepted
+
+    url = asset.photo_url or ""
+    if url and url not in asset.seen_photo_urls:
+        asset.seen_photo_urls.append(url)
+    photo = output_dir(scene.id) / "images" / f"{asset.id}.png"
+    photo.unlink(missing_ok=True)
+    if asset.image_path:
+        other = Path(asset.image_path)
+        if other.is_file():
+            other.unlink(missing_ok=True)
+    asset.image_path = None
+    asset.mesh_path = None
+    asset.cache_key = None
+    asset.instances = []
+    clear_accepted(asset, "image")
+    log_line(scene.id, scene.seed, "asset", asset_id=asset.id, note="retired", reason=reason)
+
+
+def keep_existing_photo(scene: Scene, asset) -> bool:
+    """Point the asset at ``images/<id>.png`` when that file is already on disk.
+
+    A scale miss and a mesh rebuild use this so a new web photo is not written
+    over the picture that was already judged.
+    """
+    photo = output_dir(scene.id) / "images" / f"{asset.id}.png"
+    if not photo.is_file():
+        return False
+    asset.image_path = str(photo)
+    return True
+
+
 def _asset_key(asset) -> str:
     digest = ""
     if asset.image_path and Path(asset.image_path).is_file():
@@ -128,15 +173,19 @@ def run_images(
     from farmgen.web_photo import PHOTO_TRIES, crop_box, take_accepted_photo
 
     selected = _selected(scene, only)
+    kept = [asset for asset in selected if image_ok(asset)]
+    todo = [asset for asset in selected if asset not in kept]
+    for asset in kept:
+        log_line(scene.id, scene.seed, "image", asset_id=asset.id, photo="kept", reason="image_accepted")
     if force:
-        _drop_cache(selected)
+        _drop_cache(todo)
     flux: list = []
-    for asset in selected:
+    for asset in todo:
         dest = output_dir(scene.id) / "images" / f"{asset.id}.png"
         if dest.is_file() and asset.image_path and not force:
             asset.image_path = str(dest)
             continue
-        exclude = tuple(asset.seen_photo_urls) if force else ()
+        exclude = tuple(asset.seen_photo_urls)
         field = asset.field_m is not None
 
         def _judge(path: Path, attempt: int, asset=asset):
@@ -149,7 +198,7 @@ def run_images(
             scene.seed,
             asset.id,
             dest,
-            judge=None if field or photo_judge is None else _judge,
+            judge=None if photo_judge is None else _judge,
             exclude=exclude,
             search=search,
             download=download,
@@ -163,8 +212,24 @@ def run_images(
             continue
         if field:
             path = _crop_field(scene, asset, path, plant_marker)
+            if photo_judge is not None:
+                decision = photo_judge(asset.id, asset.prompt, path, 0)
+                _record_photo(scene, asset.id, 0, path, decision)
+                if not _decision_ok(decision):
+                    log_line(
+                        scene.id,
+                        scene.seed,
+                        "image",
+                        asset_id=asset.id,
+                        photo="field_rejected",
+                        reason=getattr(decision, "reason", ""),
+                    )
+                    flux.append(asset)
+                    continue
         asset.image_path = str(path)
         asset.photo_url = url
+        if photo_judge is not None:
+            mark_accepted(asset, "image")
         if url and url not in asset.seen_photo_urls:
             asset.seen_photo_urls.append(url)
         log_line(
@@ -186,12 +251,15 @@ def run_images(
                 if asset.field_m is not None:
                     cropped = _crop_field(scene, asset, photo, plant_marker)
                     asset.image_path = str(cropped)
+                    photo = Path(cropped)
                     log_line(scene.id, scene.seed, "image", asset_id=asset.id, photo="plant", output=str(cropped))
-                    continue
                 decision = photo_judge(asset.id, asset.prompt, photo, 0)
                 _record_photo(scene, asset.id, 0, photo, decision)
                 if not _decision_ok(decision):
                     asset.image_path = None
+                    asset.mesh_path = None
+                    asset.instances = []
+                    clear_accepted(asset, "image")
                     log_line(
                         scene.id,
                         scene.seed,
@@ -201,6 +269,7 @@ def run_images(
                         reason=getattr(decision, "reason", ""),
                     )
                     continue
+                mark_accepted(asset, "image")
                 log_line(scene.id, scene.seed, "image", asset_id=asset.id, photo="flux", output=str(photo))
     save_scene(scene, scene_file)
 
@@ -270,18 +339,31 @@ def _record_photo(scene: Scene, asset_id: str, attempt: int, path: Path, decisio
 def run_meshes(scene: Scene, scene_file: Path, only: list[str] | None, force: bool = False, photo_judge=None) -> None:
     selected = _selected(scene, only)
     if force:
-        _drop_cache(selected)
+        _drop_cache([asset for asset in selected if not mesh_ok(asset)])
     missing = []
     for asset in selected:
-        key = _asset_key(asset)
-        cached = cache_path(key)
-        reason = flat_card_reason(cached) if cached.is_file() else None
-        if reason:
-            cached.unlink()
-            scaled = output_dir(scene.id) / "assets" / f"{asset.id}.glb"
-            scaled.unlink(missing_ok=True)
+        if mesh_ok(asset):
+            log_line(scene.id, scene.seed, "asset", asset_id=asset.id, note="kept", reason="mesh_accepted")
+            continue
+        if image_ok(asset) and same_rejected_image(asset):
             asset.mesh_path = None
-            log_line(scene.id, scene.seed, "asset", asset_id=asset.id, note="flat_card", reason=reason)
+            asset.instances = []
+            log_line(
+                scene.id,
+                scene.seed,
+                "asset",
+                asset_id=asset.id,
+                note="skipped",
+                reason="mesh_rejected_for_image",
+            )
+            continue
+        photo = Path(asset.image_path) if asset.image_path else None
+        if photo is None or not photo.is_file():
+            asset.mesh_path = None
+            asset.instances = []
+            log_line(scene.id, scene.seed, "asset", asset_id=asset.id, error="missing image_path")
+            continue
+        key = _asset_key(asset)
         if not cache_hit(key):
             missing.append(asset)
     if missing:
@@ -293,8 +375,7 @@ def run_scale(scene: Scene, scene_file: Path, only: list[str] | None) -> None:
     selected = _selected(scene, only)
     failed: list[str] = []
     for asset in selected:
-        key = _asset_key(asset)
-        path = cache_path(key)
+        key, path = _cache_file(asset)
         if not path.is_file():
             failed.append(asset.id)
             log_line(scene.id, scene.seed, "asset", asset_id=asset.id, error="missing cache")
@@ -303,6 +384,7 @@ def run_scale(scene: Scene, scene_file: Path, only: list[str] | None) -> None:
         if _scaled_is_fresh(asset, scaled, path):
             asset.cache_key = key
             asset.mesh_path = str(scaled)
+            _remember_achieved(asset, scaled)
             log_line(scene.id, scene.seed, "asset", asset_id=asset.id, output=str(scaled), note="scaled_fresh")
             continue
         try:
@@ -314,15 +396,93 @@ def run_scale(scene: Scene, scene_file: Path, only: list[str] | None) -> None:
             continue
         asset.cache_key = key
         asset.mesh_path = str(scaled)
+    for asset_id in failed:
+        asset = scene.asset(asset_id)
+        asset.mesh_path = None
+        asset.instances = []
+        clear_accepted(asset, "mesh")
+        if keep_existing_photo(scene, asset):
+            log_line(
+                scene.id,
+                scene.seed,
+                "asset",
+                asset_id=asset.id,
+                note="kept",
+                reason="photo_on_disk",
+                output=asset.image_path,
+            )
     save_scene(scene, scene_file)
     if failed:
-        raise RuntimeError(f"asset failures: {','.join(failed)}")
+        log_line(scene.id, scene.seed, "scale", error=f"asset failures: {','.join(failed)}")
 
 
-def run_assets(scene: Scene, scene_file: Path, only: list[str] | None, force: bool = False) -> None:
-    run_images(scene, scene_file, only, force=force)
-    run_meshes(scene, scene_file, only)
+def run_assets(
+    scene: Scene,
+    scene_file: Path,
+    only: list[str] | None,
+    force: bool = False,
+    photo_judge=None,
+    plant_marker=None,
+    mesh_judge=None,
+) -> None:
+    run_images(scene, scene_file, only, force=force, photo_judge=photo_judge, plant_marker=plant_marker)
+    run_meshes(scene, scene_file, only, force=force, photo_judge=photo_judge)
     run_scale(scene, scene_file, only)
+    if mesh_judge is None:
+        return
+    from farmgen.mesh_gate import apply_mesh_gate
+
+    loaded = load_scene(scene_file)
+
+    def regenerate(asset) -> None:
+        regenerate_mesh(
+            loaded,
+            scene_file,
+            asset,
+            photo_judge=photo_judge,
+            plant_marker=plant_marker,
+        )
+
+    ids = {asset.id for asset in _selected(loaded, only)}
+    apply_mesh_gate(loaded, mesh_judge, regenerate, only=ids)
+    save_scene(loaded, scene_file)
+
+
+def regenerate_mesh(scene: Scene, scene_file: Path, asset, photo_judge=None, plant_marker=None) -> None:
+    """Rebuild one rejected mesh. An accepted photo or mesh is left on disk."""
+    if mesh_ok(asset):
+        log_line(scene.id, scene.seed, "asset", asset_id=asset.id, note="kept", reason="mesh_accepted")
+        return
+    if image_ok(asset) and same_rejected_image(asset):
+        log_line(
+            scene.id,
+            scene.seed,
+            "asset",
+            asset_id=asset.id,
+            note="skipped",
+            reason="mesh_rejected_for_image",
+        )
+        return
+    if keep_existing_photo(scene, asset):
+        log_line(scene.id, scene.seed, "asset", asset_id=asset.id, note="kept", reason="photo_on_disk", output=asset.image_path)
+    elif not image_ok(asset):
+        run_images(scene, scene_file, [asset.id], force=True, photo_judge=photo_judge, plant_marker=plant_marker)
+    run_meshes(scene, scene_file, [asset.id], force=True, photo_judge=photo_judge)
+    try:
+        run_scale(scene, scene_file, [asset.id])
+    except RuntimeError as exc:
+        log_line(scene.id, scene.seed, "scale", error=str(exc))
+
+
+def forget_rejected_mesh(scene: Scene, asset) -> None:
+    """Drop the mesh files for a photo that failed, and keep the photo."""
+    note_mesh_rejected(asset)
+    cached = cache_path(_asset_key(asset))
+    cached.unlink(missing_ok=True)
+    cached.with_suffix(".raw.glb").unlink(missing_ok=True)
+    scaled = output_dir(scene.id) / "assets" / f"{asset.id}.glb"
+    scaled.unlink(missing_ok=True)
+    log_line(scene.id, scene.seed, "asset", asset_id=asset.id, note="kept", reason="image_accepted")
 
 
 def render_mesh_thumbs(scene: Scene, only: list[str] | None = None) -> None:
@@ -422,8 +582,7 @@ def _try_infinigen(scene: Scene, work: Path, export: Path, mesh_path: Path) -> N
         log_line(scene.id, scene.seed, "ground", backend="flat_plane", reason="infinigen venv missing")
         return
     _ensure_farm_gin(root)
-    env = os.environ.copy()
-    env.pop("CUDA_HOME", None)
+    env = _infinigen_env(root)
     cmd = [
         str(python),
         "-m",
@@ -467,6 +626,16 @@ def _try_infinigen(scene: Scene, work: Path, export: Path, mesh_path: Path) -> N
     found = _first_mesh(export)
     if found is not None:
         _copy_ground_bundle(found, mesh_path)
+
+
+def _infinigen_env(root: Path) -> dict[str, str]:
+    """Run the checkout in this repo. The venv's editable path points at a missing tree."""
+    env = os.environ.copy()
+    env.pop("CUDA_HOME", None)
+    src = root / "src"
+    previous = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = str(src) if not previous else str(src) + os.pathsep + previous
+    return env
 
 
 def _ensure_farm_gin(root: Path) -> None:
@@ -686,6 +855,9 @@ def _render_ground_pair(scene: Scene, mesh_path: Path, out: Path) -> None:
 
 
 def _generate_images(scene: Scene, assets) -> None:
+    # Qwen is still resident from the photo review. Flux needs the card, and
+    # the waiter only stops an engine it can prove is ours. Stop first.
+    _stop_vlm()
     _wait_gpu(scene, IMAGE_BUDGET_MIB)
     before = gpu_memory_mib()
     log_line(scene.id, scene.seed, "gpu", when="before_image", memory_mib=before)
@@ -717,30 +889,79 @@ def _generate_images(scene: Scene, assets) -> None:
 
 
 def _generate_meshes(scene: Scene, assets, photo_judge=None) -> None:
-    _wait_gpu(scene, TRELLIS_BUDGET_MIB)
+    """One TRELLIS process per free GPU. Qwen starts again only after this pool exits."""
+    from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+
+    from farmgen.gpu import wait_for_devices
+    from farmgen.workers.vlm_critic import stop_server
+
+    stop_server()
+    devices = _wait_trellis_devices(scene, wait_for_devices)
     python = trellis_dir() / ".venv" / "bin" / "python"
     if not python.is_file():
         raise RuntimeError(f"TRELLIS venv missing at {python}")
     before = gpu_memory_mib()
-    log_line(scene.id, scene.seed, "gpu", when="before_trellis", memory_mib=before)
+    log_line(
+        scene.id,
+        scene.seed,
+        "gpu",
+        when="before_trellis",
+        memory_mib=before,
+        workers=len(devices),
+        gpus=",".join(str(device) for device in devices),
+    )
     worker = repo_root() / "farmgen" / "workers" / "trellis_generate.py"
     failures: list[str] = []
     flux_retry: list = []
+    pending = [asset for asset in assets if asset.image_path]
     for asset in assets:
-        if not asset.image_path:
-            failures.append(asset.id)
-            log_line(scene.id, scene.seed, "asset", asset_id=asset.id, error="missing image_path")
+        if asset.image_path:
             continue
-        status = _run_trellis(scene, asset, python, worker)
+        failures.append(asset.id)
+        log_line(scene.id, scene.seed, "asset", asset_id=asset.id, error="missing image_path")
+
+    def _finish(asset, status: str) -> None:
         if status == "ok":
-            continue
+            return
+        if image_ok(asset):
+            forget_rejected_mesh(scene, asset)
+            log_line(scene.id, scene.seed, "asset", asset_id=asset.id, note=status, reason="image_accepted")
+            failures.append(asset.id)
+            return
         if asset.photo_url:
             log_line(scene.id, scene.seed, "asset", asset_id=asset.id, note=status, photo="web")
             asset.image_path = None
             asset.photo_url = None
             flux_retry.append(asset)
-            continue
+            return
         failures.append(asset.id)
+
+    if pending:
+        free = list(devices)
+        inflight = {}
+        with ThreadPoolExecutor(max_workers=max(1, len(devices))) as pool:
+
+            def _submit(device: int) -> None:
+                asset = pending.pop(0)
+                log_line(scene.id, scene.seed, "asset", asset_id=asset.id, gpu=device, note="trellis_start")
+                inflight[pool.submit(_run_trellis, scene, asset, python, worker, device)] = (asset, device)
+
+            while pending and free:
+                _submit(free.pop())
+            while inflight:
+                done, _pending_futures = wait(set(inflight), return_when=FIRST_COMPLETED)
+                for future in done:
+                    asset, device = inflight.pop(future)
+                    try:
+                        status = future.result()
+                    except Exception as exc:
+                        log_line(scene.id, scene.seed, "asset", asset_id=asset.id, error=str(exc))
+                        status = "empty_foreground"
+                    _finish(asset, status)
+                    if pending:
+                        _submit(device)
+                    else:
+                        free.append(device)
     if flux_retry:
         _generate_images(scene, flux_retry)
         for asset in flux_retry:
@@ -750,10 +971,16 @@ def _generate_meshes(scene: Scene, assets, photo_judge=None) -> None:
                 _record_photo(scene, asset.id, 0, photo, decision)
                 if not _decision_ok(decision):
                     asset.image_path = None
+                    asset.mesh_path = None
+                    asset.instances = []
+                    clear_accepted(asset, "image")
                     failures.append(asset.id)
                     log_line(scene.id, scene.seed, "image", asset_id=asset.id, photo="flux_rejected")
                     continue
-            if not asset.image_path or _run_trellis(scene, asset, python, worker) != "ok":
+                mark_accepted(asset, "image")
+            if not asset.image_path or _run_trellis(scene, asset, python, worker, devices[0]) != "ok":
+                if image_ok(asset):
+                    forget_rejected_mesh(scene, asset)
                 failures.append(asset.id)
     if failures:
         log_line(scene.id, scene.seed, "asset", failed=",".join(failures))
@@ -761,8 +988,52 @@ def _generate_meshes(scene: Scene, assets, photo_judge=None) -> None:
     log_line(scene.id, scene.seed, "gpu", when="after_trellis", memory_mib=after)
 
 
-def _run_trellis(scene: Scene, asset, python: Path, worker: Path) -> str:
-    """Build one GLB. Return ``ok``, ``empty_foreground``, or ``flat_card``."""
+def _wait_trellis_devices(scene: Scene, wait_for_devices) -> list[int]:
+    """Stop our Qwen first, then wait until one or more cards can hold TRELLIS."""
+
+    def on_event(when: str, free: int, required: int) -> None:
+        log_line(scene.id, scene.seed, "gpu", when=when, free_mib=free, need_mib=required)
+
+    from farmgen.workers.vlm_critic import stop_server
+
+    devices = wait_for_devices(TRELLIS_BUDGET_MIB, stop_own=stop_server, on_event=on_event)
+    log_line(
+        scene.id,
+        scene.seed,
+        "gpu",
+        when="assigned",
+        gpus=",".join(str(device) for device in devices),
+        workers=len(devices),
+        serial=int(len(devices) < 2),
+    )
+    return devices
+
+
+def _read_fill_report(raw: Path) -> dict:
+    """Read the worker's GPU hole-fill report and delete the sidecar.
+
+    The numbers in the report are GPU memory. A missing file means the worker
+    did not record a GPU fill, so the CPU pinhole fill runs.
+    """
+    path = Path(str(raw) + ".fill.json")
+    if not path.is_file():
+        return {"fill": "cpu", "reason": "no_marker", "memory": "gpu"}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        data = {"fill": "cpu", "reason": "bad_marker", "memory": "gpu"}
+    if not isinstance(data, dict):
+        data = {"fill": "cpu", "reason": "bad_marker", "memory": "gpu"}
+    path.unlink(missing_ok=True)
+    return data
+
+
+def _run_trellis(scene: Scene, asset, python: Path, worker: Path, device: int | None = None) -> str:
+    """Build one GLB. Return ``ok`` or ``empty_foreground``.
+
+    A flat card and a non-manifold edge count are logged and the file is kept.
+    Qwen sees the thumbnails and accepts or rejects that mesh.
+    """
     key = _asset_key(asset)
     dest = cache_path(key)
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -780,6 +1051,12 @@ def _run_trellis(scene: Scene, asset, python: Path, worker: Path) -> str:
         "512",
     ]
     env = os.environ.copy()
+    if device is not None and int(device) >= 0:
+        env["CUDA_VISIBLE_DEVICES"] = str(int(device))
+    else:
+        from farmgen.gpu import apply_worker_device
+
+        apply_worker_device(env)
     env["PYTHONPATH"] = str(trellis_dir()) + os.pathsep + env.get("PYTHONPATH", "")
     env.setdefault("CUDA_HOME", str(repo_root() / "toolchains" / "cuda-13.2"))
     env["PATH"] = str(repo_root() / "toolchains" / "cuda-13.2" / "bin") + os.pathsep + env.get("PATH", "")
@@ -794,11 +1071,33 @@ def _run_trellis(scene: Scene, asset, python: Path, worker: Path) -> str:
             error=f"trellis returncode={result.returncode}",
         )
         return "empty_foreground"
-    reason = flat_card_reason(raw)
-    if reason:
-        raw.unlink()
-        log_line(scene.id, scene.seed, "asset", asset_id=asset.id, note="flat_card", reason=reason)
-        return "flat_card"
+    from farmgen.repair import hole_fill_on_cpu, repair_mesh_file
+
+    marker = _read_fill_report(raw)
+    try:
+        report = repair_mesh_file(raw, fill_holes=hole_fill_on_cpu(marker))
+    except ValueError as exc:
+        raw.unlink(missing_ok=True)
+        log_line(scene.id, scene.seed, "asset", asset_id=asset.id, error=str(exc))
+        return "empty_foreground"
+    log_line(
+        scene.id,
+        scene.seed,
+        "asset",
+        asset_id=asset.id,
+        note="repaired",
+        holes=report.holes_filled,
+        fill=marker.get("fill", "cpu"),
+        fill_reason=marker.get("reason", ""),
+        memory=marker.get("memory", ""),
+        gpu_free_mib=marker.get("gpu_free_mib", ""),
+        gpu_total_mib=marker.get("gpu_total_mib", ""),
+        gpu_allocated_mib=marker.get("gpu_allocated_mib", ""),
+        need_mib=marker.get("need_mib", ""),
+        nonmanifold_before=report.nonmanifold_before,
+        nonmanifold_after=report.nonmanifold_after,
+        flatness=f"{report.flatness:.4f}",
+    )
     raw.replace(dest)
     return "ok"
 
@@ -818,9 +1117,46 @@ def _vertex_colors(mesh, vertex_count: int) -> np.ndarray | None:
     return colors
 
 
+def _scale_stamp_path(dest: Path) -> Path:
+    return dest.with_suffix(".scale.json")
+
+
+def _write_scale_stamp(dest: Path, catalog: tuple[float, float, float], achieved: tuple[float, float, float] | None, factor: float) -> None:
+    payload = {
+        "size_m": [float(axis) for axis in catalog],
+        "achieved_m": None if achieved is None else [float(axis) for axis in achieved],
+        "factor": float(factor),
+    }
+    _scale_stamp_path(dest).write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def _remember_achieved(asset, scaled: Path) -> None:
+    path = _scale_stamp_path(scaled)
+    if not path.is_file():
+        return
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    achieved = payload.get("achieved_m")
+    if isinstance(achieved, list) and len(achieved) == 3:
+        asset.achieved_m = tuple(float(axis) for axis in achieved)
+
+
 def _scaled_is_fresh(asset, scaled: Path, source: Path) -> bool:
-    """Reuse a scaled mesh only when it is newer than the cache and under the copy face cap."""
+    """Reuse a scaled mesh only when it matches this catalog box and is newer than the cache."""
     if not scaled.is_file() or scaled.stat().st_mtime < source.stat().st_mtime:
+        return False
+    stamp = _scale_stamp_path(scaled)
+    if not stamp.is_file():
+        return False
+    try:
+        recorded = json.loads(stamp.read_text(encoding="utf-8")).get("size_m")
+    except (OSError, json.JSONDecodeError):
+        return False
+    if not isinstance(recorded, list) or len(recorded) != 3:
+        return False
+    if any(abs(float(left) - float(right)) > 1e-4 for left, right in zip(recorded, asset.size_m, strict=True)):
         return False
     if asset.count < 4:
         return True
@@ -919,27 +1255,48 @@ def _transfer_colors(src: np.ndarray, colors: np.ndarray, dst: np.ndarray) -> np
     return out
 
 
+def _cache_file(asset) -> tuple[str, Path]:
+    """The cache GLB already stored for this asset, or the key of the current photo."""
+    if asset.cache_key:
+        stored = cache_path(asset.cache_key)
+        if stored.is_file():
+            return asset.cache_key, stored
+    key = _asset_key(asset)
+    return key, cache_path(key)
+
+
 def _scale_cached(scene: Scene, asset, source: Path, dest: Path) -> None:
     started = time.perf_counter()
     asset_id = asset.id
     prompt = asset.prompt
-    size_m = asset.size_m
+    catalog = tuple(float(axis) for axis in asset.size_m)
     mesh = load_ground(source)
     upright = apply_rotation(np.asarray(mesh.vertices), asset.orient)
     try:
-        scaled = scale_vertices_to_size(upright, size_m)
+        scaled, mask, factor = scale_detail(upright, catalog)
     except ValueError as exc:
         dest.unlink(missing_ok=True)
         raise RuntimeError(f"{asset_id} scale failed: {exc}") from exc
+    faces_in = kept_faces(np.asarray(mesh.faces), mask)
+    if len(faces_in) == 0:
+        dest.unlink(missing_ok=True)
+        raise RuntimeError(f"{asset_id} scale dropped every face")
     bbox = bbox_size(scaled)
-    if not size_error_ok(bbox, size_m):
-        err = relative_size_error(bbox, size_m)
-        raise RuntimeError(f"{asset_id} bbox misses size_m by {err}")
-    sealed, faces, hole, did_seal = seal_contact_floor(scaled, mesh.faces)
+    catalog_arr = np.asarray(catalog, dtype=np.float64)
+    if np.any(np.asarray(bbox) > catalog_arr * (1.0 + 1e-3) + 1e-4):
+        dest.unlink(missing_ok=True)
+        raise RuntimeError(f"{asset_id} uniform scale left the catalog box {bbox} > {catalog}")
+    if not size_error_ok(bbox, bbox):
+        err = relative_size_error(bbox, bbox)
+        raise RuntimeError(f"{asset_id} bbox misses its achieved size by {err}")
+    asset.achieved_m = tuple(float(axis) for axis in bbox)
+    sealed, faces, hole, did_seal = seal_contact_floor(scaled, faces_in)
     if hole > HOLE_FRACTION_LIMIT:
         raise RuntimeError(f"{asset_id} contact_hole_fraction={hole:.3f}")
     out = trimesh.Trimesh(vertices=sealed, faces=faces, process=False)
-    colors = _vertex_colors(mesh, len(scaled))
+    colors = _vertex_colors(mesh, len(upright))
+    if colors is not None:
+        colors = colors[mask]
     if colors is not None and did_seal:
         extra = np.repeat(colors[:1], len(sealed) - len(colors), axis=0)
         colors = np.vstack([colors, extra])
@@ -947,10 +1304,11 @@ def _scale_cached(scene: Scene, asset, source: Path, dest: Path) -> None:
         out = _decimate_copy(out, colors, COPY_FACE_CAP)
     elif colors is not None and len(colors) == len(out.vertices):
         out.visual.vertex_colors = colors
-    elif mesh.visual is not None and len(getattr(mesh.vertices, "__len__", lambda: 0)()) == len(out.vertices):
+    elif mesh.visual is not None and len(mesh.vertices) == len(out.vertices):
         out.visual = mesh.visual
     dest.parent.mkdir(parents=True, exist_ok=True)
     out.export(dest)
+    _write_scale_stamp(dest, catalog, asset.achieved_m, factor)
     elapsed = time.perf_counter() - started
     log_line(
         scene.id,
@@ -966,6 +1324,8 @@ def _scale_cached(scene: Scene, asset, source: Path, dest: Path) -> None:
         contact_hole_fraction=round(hole, 4),
         floor_sealed=int(did_seal),
         orient=asset.orient,
+        note="uniform",
+        factor=round(factor, 4),
     )
     _render_asset_views(scene, asset_id, dest)
 
@@ -1019,12 +1379,23 @@ def _render_asset_views(scene: Scene, asset_id: str, mesh: Path) -> None:
 
 
 def _wait_gpu(scene: Scene, need_mib: int) -> None:
+    from farmgen.gpu import remember_worker, wait_for_plan
     from farmgen.workers.vlm_critic import stop_server
 
     def on_event(when: str, free: int, required: int) -> None:
         log_line(scene.id, scene.seed, "gpu", when=when, free_mib=free, need_mib=required)
 
-    wait_for_vram(need_mib, stop_own=stop_server, on_event=on_event)
+    plan = wait_for_plan(need_mib, stop_own=stop_server, on_event=on_event)
+    remember_worker(plan.worker)
+    log_line(
+        scene.id,
+        scene.seed,
+        "gpu",
+        when="assigned",
+        gpu=plan.worker,
+        qwen=plan.qwen,
+        serial=int(plan.serial),
+    )
 
 
 def _stop_vlm() -> None:
@@ -1044,10 +1415,15 @@ def _start_comfy() -> subprocess.Popen:
     python = comfy_dir() / ".venv" / "bin" / "python"
     if not python.is_file():
         raise RuntimeError(f"ComfyUI venv missing at {python}")
+    from farmgen.gpu import apply_worker_device, note_own_pid
+
+    env = apply_worker_device(os.environ.copy())
     proc = subprocess.Popen(
         [str(python), "main.py", "--listen", "127.0.0.1", "--port", "8188"],
         cwd=comfy_dir(),
+        env=env,
     )
+    note_own_pid(proc.pid)
     import requests
 
     deadline = time.monotonic() + 180

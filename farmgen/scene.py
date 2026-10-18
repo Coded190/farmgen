@@ -9,6 +9,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
 Layout = Literal["unique", "line", "grid", "rows", "surround", "perimeter"]
+REQUIRED_WORDS = ("barn", "silo", "tractor", "fence", "tree", "bush", "crop", "pasture", "wheat", "corn")
 
 
 class GroundSpec(BaseModel):
@@ -50,7 +51,11 @@ class AssetSpec(BaseModel):
     orient: str = "y_up"
     photo_url: str | None = None
     seen_photo_urls: list[str] = Field(default_factory=list)
+    accepted: list[str] = Field(default_factory=list)
+    mesh_image_sha: str = ""
     field_m: tuple[float, float] | None = None
+    field_origin: tuple[float, float] | None = None
+    achieved_m: tuple[float, float, float] | None = None
     instances: list[Instance] = Field(default_factory=list)
 
     @field_validator("id")
@@ -60,11 +65,21 @@ class AssetSpec(BaseModel):
             raise ValueError("asset id must be a non-empty token")
         return value
 
-    @field_validator("size_m")
+    @field_validator("accepted")
     @classmethod
-    def _positive_size(cls, value: tuple[float, float, float]) -> tuple[float, float, float]:
+    def _known_stages(cls, value: list[str]) -> list[str]:
+        unknown = [item for item in value if item not in {"image", "mesh"}]
+        if unknown:
+            raise ValueError(f"accepted stages must be image or mesh, got {unknown}")
+        return list(dict.fromkeys(value))
+
+    @field_validator("size_m", "achieved_m")
+    @classmethod
+    def _positive_size(cls, value: tuple[float, float, float] | None) -> tuple[float, float, float] | None:
+        if value is None:
+            return None
         if len(value) != 3 or any(axis <= 0 or axis != axis for axis in value):
-            raise ValueError("asset size_m must be three positive finite meters [width, depth, height]")
+            raise ValueError("asset size must be three positive finite meters [width, depth, height]")
         return value
 
     @model_validator(mode="after")
@@ -93,6 +108,29 @@ class Scene(BaseModel):
             if item.id == asset_id:
                 return item
         raise KeyError(asset_id)
+
+
+def plan_extent(asset: AssetSpec) -> tuple[float, float]:
+    """Footprint width and depth.
+
+    A fence keeps the catalog length so the perimeter stays a rail. Every other
+    asset uses the mesh bbox once scale has measured it.
+    """
+    if asset.layout != "perimeter" and asset.achieved_m is not None:
+        return (float(asset.achieved_m[0]), float(asset.achieved_m[1]))
+    return (float(asset.size_m[0]), float(asset.size_m[1]))
+
+
+def crop_band_y(scene: Scene) -> float | None:
+    """North edge of the crop blocks, in plot meters. ``None`` when no block has an origin."""
+    tops = [
+        float(asset.field_origin[1]) + float(asset.field_m[1])
+        for asset in scene.assets
+        if asset.field_m is not None and asset.field_origin is not None
+    ]
+    if not tops:
+        return None
+    return max(tops)
 
 
 def load_scene(path: Path) -> Scene:
@@ -158,7 +196,12 @@ def catalog_text(
         '"count":1,"layout":"unique"}]}. '
         "layout is unique, line, grid, rows, surround, or perimeter. unique requires count 1. "
         "surround copies sit outside the placement plot. "
-        "Each prompt names exactly one object. Do not name a tree and a bush in the same prompt. "
+        "Each prompt names one object and one or two words of form, such as \"a wooden barn\" or \"a leafy tree\". "
+        "Form is a material or a shape, so a search and Flux can tell which object this is. "
+        "Do not add a second object, a place, a species, or a list of parts. Do not say where it sits. "
+        "Image search and Flux already ask for one centered object on a plain background. "
+        "Do not repeat the camera or the background in the prompt. "
+        "Do not name a tree and a bush in the same prompt. "
         "A surround asset is one object, such as one tree or one bush, not a ring of them. "
         f"One tree uses about as many copies as the ring can hold, each at most 8 meters. "
         "A fence encloses the yard: perimeter segments of at least 2 meters, not one straight line and not a tiny post. "
@@ -184,12 +227,22 @@ def catalog_text(
     return text
 
 
-def catalog_or_starter(scene: Scene, ask, attempts: int = 2, images=None, record_dir: Path | None = None) -> Scene:
+def catalog_or_starter(
+    scene: Scene,
+    ask,
+    attempts: int = 2,
+    images=None,
+    record_dir: Path | None = None,
+    judge=None,
+) -> Scene:
     """Keep Qwen's asset list. Repair one unfit asset instead of substituting the starter list.
 
-    ``ask(prompt)`` or ``ask(prompt, images)`` returns a JSON object. A connection
-    error or a payload that is not a catalog is retried. A footprint that cannot
-    sit in the yard is sent back for that id only. Assets that were valid stay.
+    ``ask(prompt)`` or ``ask(prompt, images)`` returns a JSON object, or an object
+    with ``payload`` and ``reply``. A connection error or a payload that is not a
+    catalog is retried. A footprint that cannot sit in the yard is sent back for
+    that id only. When ``judge(brief, assets, images)`` is set, it only accepts or
+    rejects the normalized list. A rejected list is generated again. Assets
+    already on the scene stay when generation fails or every list is rejected.
     """
     import inspect
 
@@ -202,48 +255,95 @@ def catalog_or_starter(scene: Scene, ask, attempts: int = 2, images=None, record
         return ask(prompt)
 
     pictures = list(images or [])
-    last = "none"
-    loaded = False
-    for attempt in range(1, attempts + 1):
-        payload = None
+    original = [asset.model_copy(deep=True) for asset in scene.assets]
+    last_reason = ""
+    for round_index in range(1, attempts + 1):
+        if round_index > 1:
+            scene.assets = [asset.model_copy(deep=True) for asset in original]
+        passed = _generate_catalog(scene, _ask, attempts, pictures, record_dir)
+        if passed is None:
+            return scene
+        missing = missing_required(scene.brief, scene.assets)
+        if missing:
+            last_reason = "missing=" + ",".join(missing)
+            log_line(scene.id, scene.seed, "catalog", missing=",".join(missing), assets=len(scene.assets))
+            _record_catalog_gate(record_dir, False, last_reason, "")
+            continue
+        if judge is None:
+            return scene
         try:
-            payload = _ask(
-                catalog_text(
-                    scene.brief,
-                    scene.ground.plot_m,
-                    scene.ground.terrain_m,
-                    name_from_images=bool(pictures),
-                )
-            )
+            decision = judge(scene.brief, list(scene.assets), pictures)
+        except (OSError, RuntimeError, TypeError, ValueError, ValidationError) as exc:
+            accept, reason, reply = False, str(exc).replace("\n", " "), ""
+        else:
+            accept, reason, reply = _catalog_decision(decision)
+        _record_catalog_gate(record_dir, accept, reason, reply)
+        log_line(
+            scene.id,
+            scene.seed,
+            "catalog",
+            gate=round_index,
+            accept=int(accept),
+            reason=reason,
+            assets=len(scene.assets),
+        )
+        if accept:
+            return scene
+        last_reason = reason or "rejected"
+    scene.assets = [asset.model_copy(deep=True) for asset in original]
+    log_line(scene.id, scene.seed, "catalog", note="rejected", reason=last_reason, assets=len(scene.assets))
+    return scene
+
+
+def _generate_catalog(scene: Scene, ask, attempts: int, pictures: list, record_dir: Path | None) -> dict | None:
+    """Replace ``scene.assets`` from Qwen. ``None`` means the call never produced a list."""
+    from farmgen.log import log_line
+
+    last = "none"
+    passed: dict | None = None
+    for attempt in range(1, attempts + 1):
+        prompt = catalog_text(
+            scene.brief,
+            scene.ground.plot_m,
+            scene.ground.terrain_m,
+            name_from_images=bool(pictures),
+        )
+        payload = None
+        reply = ""
+        try:
+            payload, reply = _unwrap_catalog(ask(prompt))
             scene.assets = assets_from_catalog(payload)
-            loaded = True
+            passed = {"prompt": prompt, "reply": reply, "payload": payload}
             break
         except (OSError, RuntimeError, TypeError, ValueError, ValidationError) as exc:
             last = str(exc).replace("\n", " ")
-            _record_catalog(record_dir, attempt, payload)
+            _record_catalog(record_dir, attempt, {"prompt": prompt, "reply": reply, "payload": payload, "error": last})
             log_line(scene.id, scene.seed, "catalog", attempt=attempt, ok=0, error=last)
-    if not loaded:
+    if passed is None:
         log_line(scene.id, scene.seed, "catalog", note="kept", error=last, assets=len(scene.assets))
-        return scene
+        return None
 
     for repair in range(1, attempts + 1):
         error = _first_fit_error(scene)
         if error is None:
             normalize_catalog(scene)
+            _record_catalog_bundle(record_dir, passed, scene)
             log_line(scene.id, scene.seed, "catalog", attempt=repair, ok=1, assets=len(scene.assets))
-            return scene
+            return passed
         asset_id = error.split(" ", 1)[0]
         _record_catalog(record_dir, repair, {"error": error, "assets": [asset.model_dump() for asset in scene.assets]})
         log_line(scene.id, scene.seed, "catalog", repair=repair, id=asset_id, error=error)
         try:
-            repaired = _ask(
-                catalog_text(
-                    scene.brief,
-                    scene.ground.plot_m,
-                    scene.ground.terrain_m,
-                    repair_id=asset_id,
-                    error=error,
-                    name_from_images=bool(pictures),
+            repaired, _reply = _unwrap_catalog(
+                ask(
+                    catalog_text(
+                        scene.brief,
+                        scene.ground.plot_m,
+                        scene.ground.terrain_m,
+                        repair_id=asset_id,
+                        error=error,
+                        name_from_images=bool(pictures),
+                    )
                 )
             )
             _replace_asset(scene, asset_id, repaired)
@@ -256,8 +356,26 @@ def catalog_or_starter(scene: Scene, ask, attempts: int = 2, images=None, record
         asset_id = error.split(" ", 1)[0]
         scene.assets = [asset for asset in scene.assets if asset.id != asset_id]
         log_line(scene.id, scene.seed, "catalog", id=asset_id, note="unplaceable", error=error)
+    _record_catalog_bundle(record_dir, passed, scene)
     log_line(scene.id, scene.seed, "catalog", ok=1, assets=len(scene.assets))
-    return scene
+    return passed
+
+
+def _unwrap_catalog(result: object) -> tuple[object, str]:
+    """A catalog call may return the JSON object or ``payload`` plus the raw reply."""
+    payload = getattr(result, "payload", None)
+    reply = getattr(result, "reply", None)
+    if isinstance(payload, dict) and isinstance(reply, str):
+        return payload, reply
+    return result, ""
+
+
+def _catalog_decision(decision: object) -> tuple[bool, str, str]:
+    if isinstance(decision, bool):
+        return decision, "", ""
+    reason = getattr(decision, "reason", "")
+    reply = getattr(decision, "reply", "")
+    return bool(getattr(decision, "accept", False)), "" if reason is None else str(reason), "" if reply is None else str(reply)
 
 
 def _record_catalog(record_dir: Path | None, attempt: int, payload: object) -> None:
@@ -266,6 +384,33 @@ def _record_catalog(record_dir: Path | None, attempt: int, payload: object) -> N
     path = Path(record_dir) / f"catalog_attempt_{attempt}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def _record_catalog_bundle(record_dir: Path | None, passed: dict, scene: Scene) -> None:
+    """Write the prompt, the raw reply, and the normalized asset list in one file."""
+    if record_dir is None:
+        return
+    path = Path(record_dir) / "catalog_record.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    body = {
+        "prompt": passed.get("prompt", ""),
+        "reply": passed.get("reply", ""),
+        "payload": passed.get("payload"),
+        "assets": [asset.model_dump() for asset in scene.assets],
+        "missing": missing_required(scene.brief, scene.assets),
+    }
+    path.write_text(json.dumps(body, indent=2) + "\n", encoding="utf-8")
+
+
+def _record_catalog_gate(record_dir: Path | None, accept: bool, reason: str, reply: str) -> None:
+    if record_dir is None:
+        return
+    path = Path(record_dir) / "catalog_gate.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({"accept": accept, "reason": reason, "reply": reply}, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def _first_fit_error(scene: Scene) -> str | None:
@@ -290,6 +435,23 @@ def _replace_asset(scene: Scene, asset_id: str, payload: dict) -> None:
         payload["id"] = asset_id
         replacement = AssetSpec.model_validate(payload)
     scene.assets = [replacement if asset.id == asset_id else asset for asset in scene.assets]
+
+
+def missing_required(brief: str, assets: list) -> list[str]:
+    """Lexicon words in the brief that no asset id or prompt contains after normalization.
+
+    A word that is not in the brief is not required. Matching is a substring of
+    the lowercased id and prompt, so ``crops`` satisfies ``crop``.
+    """
+    text = brief.lower()
+    named = [word for word in REQUIRED_WORDS if word in text]
+    blob = " ".join(
+        f"{getattr(asset, 'id', '')} {getattr(asset, 'prompt', '')}".lower()
+        if not isinstance(asset, dict)
+        else f"{asset.get('id', '')} {asset.get('prompt', '')}".lower()
+        for asset in assets
+    )
+    return [word for word in named if word not in blob]
 
 
 def is_ring_phrase(prompt: str) -> bool:
